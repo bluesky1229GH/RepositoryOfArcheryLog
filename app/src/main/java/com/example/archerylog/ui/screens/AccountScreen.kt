@@ -22,6 +22,8 @@ import com.example.archerylog.utils.ImageUtils
 import com.example.archerylog.ui.components.ProfileAvatar
 import com.example.archerylog.ui.utils.L10n
 import com.example.archerylog.ui.utils.AppLanguage
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -205,35 +207,42 @@ fun AccountScreen(
                                                 modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
                                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                                             ) {
-                                                Column(modifier = Modifier.padding(12.dp)) {
+                                                Column(modifier = Modifier.padding(16.dp)) {
                                                     Row(
                                                         modifier = Modifier.fillMaxWidth(),
                                                         horizontalArrangement = Arrangement.SpaceBetween,
-                                                        verticalAlignment = Alignment.CenterVertically
+                                                        verticalAlignment = Alignment.Top
                                                     ) {
-                                                        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                                                        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.Top) {
                                                             Icon(
                                                                 if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                                                 contentDescription = null,
-                                                                modifier = Modifier.size(20.dp)
+                                                                modifier = Modifier.size(32.dp).padding(top = 4.dp)
                                                             )
-                                                            Spacer(modifier = Modifier.width(8.dp))
+                                                            Spacer(modifier = Modifier.width(12.dp))
                                                             Text(
                                                                 "Q: ${fav.question}",
-                                                                style = MaterialTheme.typography.titleSmall,
-                                                                maxLines = if (expanded) Int.MAX_VALUE else 1,
+                                                                fontSize = 24.sp,
+                                                                lineHeight = 32.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                maxLines = if (expanded) Int.MAX_VALUE else 2,
                                                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                                             )
                                                         }
-                                                        IconButton(onClick = { viewModel.deleteAiFavorite(fav.id) }, modifier = Modifier.size(24.dp)) {
-                                                            Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp))
+                                                        IconButton(onClick = { viewModel.deleteAiFavorite(fav.id) }, modifier = Modifier.size(36.dp).padding(top = 4.dp)) {
+                                                            Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(24.dp))
                                                         }
                                                     }
                                                     if (expanded) {
-                                                        Spacer(modifier = Modifier.height(8.dp))
+                                                        Spacer(modifier = Modifier.height(16.dp))
                                                         Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-                                                        Spacer(modifier = Modifier.height(8.dp))
-                                                        Text(fav.answer, style = MaterialTheme.typography.bodySmall)
+                                                        Spacer(modifier = Modifier.height(16.dp))
+                                                        Text(
+                                                            fav.answer, 
+                                                            fontSize = 20.sp, 
+                                                            lineHeight = 28.sp,
+                                                            style = MaterialTheme.typography.bodyLarge
+                                                        )
                                                     }
                                                 }
                                             }
