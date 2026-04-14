@@ -1,0 +1,44 @@
+<h1 id="archerylog-开发全记录从零开始的-kotlin-学习之旅">🏹 ArcheryLog 开发全记录：从零开始的 Kotlin 学习之旅</h1>
+<p>你好！欢迎来到 <strong>ArcheryLog</strong> 的开发幕后。作为一个编程入门者，面对几十个文件夹和上万行代码感到困惑是非常正常的。</p>
+<p>这份文档将把你当作一名<strong>零基础</strong>的学习者，详细拆解我是如何一步步构建这个项目的，以及每一个技术点背后到底在干什么。</p>
+<hr />
+<h2 id="第一部分项目的五脏六腑-目录结构">第一部分：项目的“五脏六腑” —— 目录结构</h2>
+<p>当你打开项目文件夹，会看到一堆东西。我们只需要关注最核心的部分：</p>
+<ol type="1">
+<li><strong><code>app/src/main/java/com/example/archerylog/</code></strong>：这是 App 的“心脏”，你写的所有逻辑代码都在这里。
+<ul>
+<li>📁 <strong><code>data/</code></strong>：数据存取中心。这里定义了“射箭、用户、靶心”这些概念在代码里长什么样，以及怎么存进手机里。</li>
+<li>📁 <strong><code>ui/</code></strong>：外貌中心。控制你在屏幕上看到的按钮、文字、颜色和动画。</li>
+<li>📁 <strong><code>domain/</code></strong>：逻辑中转站。虽然规模小，但它负责连接数据和界面。</li>
+</ul></li>
+<li><strong><code>app/src/main/res/</code></strong>：资源文件夹。存放 App 的图标、启动图、颜色定义等。</li>
+<li><strong><code>build.gradle.kts</code></strong>：这是项目的“采购单”。它告诉计算机：这个 App 需要用到哪些现成的零件（库）。</li>
+</ol>
+<hr />
+<h2 id="第二部分项目是如何拔地而起的构建流程">第二部分：项目是如何“拔地而起”的？（构建流程）</h2>
+<p>我是分这五个大步骤来建立这个项目的：</p>
+<h3 id="步骤-1准备画板-project-setup">步骤 1：准备画板 (Project Setup)</h3>
+<p>就像画画前要买画架。我先设置了 <strong>Gradle</strong> 配置文件。 * <strong>知识点：Gradle</strong>。它像是一个管家，你告诉它你需要“拍照功能”或者“数据库功能”，它就去互联网上帮你下载对应的零件装好。</p>
+<h3 id="步骤-2定义什么是射箭训练-data-modeling">步骤 2：定义“什么是射箭训练” (Data Modeling)</h3>
+<p>在代码里，机器不认识“射箭”。所以我们要定义： * 一个 <code>User</code> (用户) 有：名字、密码。 * 一个 <code>Session</code> (训练组) 有：日期、距离、总分。 * 一个 <code>Shot</code> (每一箭) 有：分数、在靶子上的坐标。 * <strong>知识点：Data Class (数据类)</strong>。它是 Kotlin 里最简单的类，专门用来装数据。</p>
+<h3 id="步骤-3建立电子记事本-database-with-room">3. 步骤 3：建立“电子记事本” (Database with Room)</h3>
+<p>数据定义好了，得有地方存，不然 App 一关就没了。 * <strong>知识点：Room Database</strong>。这是 Android 官方的数据库工具。它能把你的 <code>User</code>、<code>Session</code> 自动转成类似 Excel 表格的形式存在手机硬盘里。</p>
+<h3 id="步骤-4分配管家-viewmodel">4. 步骤 4：分配“管家” (ViewModel)</h3>
+<p>界面和数据库不能直接打架，需要一个管家在中间协调。 * <strong>知识点：MVVM 架构</strong>。 * <strong>M (Model)</strong>：数据本身。 * <strong>V (View)</strong>：你在屏幕上看到的按钮。 * <strong>VM (ViewModel)</strong>：管家。当你在屏幕上点一下，管家就去改数据库；当数据库变了，管家就去通知屏幕更新。</p>
+<h3 id="步骤-5画出界面-ui-with-jetpack-compose">5. 步骤 5：画出界面 (UI with Jetpack Compose)</h3>
+<p>这是最有趣的一步。 * <strong>知识点：Jetpack Compose</strong>。这是目前最流行的写界面的方式。它像搭积木一样，你写 <code>Text("你好")</code> 屏幕上就会出字。 * <strong>难点（也是亮点）：<code>TargetFace.kt</code></strong>。这是我手动用代码画出来的靶子。我没用图片，而是用指令告诉手机：“画一个红色的圆，再画一个黄色的圆”，这样它在任何手机上都很清晰。</p>
+<hr />
+<h2 id="第三部分核心知识点通俗解释">第三部分：核心知识点通俗解释</h2>
+<h3 id="什么是-state-状态">1. 什么是 <code>State</code> (状态)？</h3>
+<p>打个比方：你的心情是“状态”。当你的状态是“开心”时，你会笑；当状态变成“难过”时，你会哭。 在 App 里，<code>State</code> 就是数据。当“分数”这个状态变了，界面上的数字就会自动跳动。</p>
+<h3 id="什么是-coroutines-协程">2. 什么是 <code>Coroutines</code> (协程)？</h3>
+<p>想象你在煮饭时，不需要一直盯着锅看，你可以去洗菜。 协程就是让手机能“分身”。它去后台写数据库（煮饭）的时候，前台界面（洗菜）依流畅，不会卡死。</p>
+<h3 id="什么是-flow-流">3. 什么是 <code>Flow</code> (流)？</h3>
+<p>它像是一根连接数据库和界面的透明吸管。数据库里多了一条记录，就像吸管里进了一颗珍珠，它会自动滚到界面那一头。你不需要手动去点“刷新”。</p>
+<hr />
+<h2 id="第四部分当前进度与后续计划">第四部分：当前进度与后续计划</h2>
+<p><strong>目前已完成：</strong> ✅ 用户注册、登录、找回密码流程。 ✅ 训练历史列表展示。 ✅ 核心：点击靶面记录分数，自动计算环数。 ✅ 图表分析初步展示。</p>
+<p><strong>接下来我要做的：</strong> 🛠️ 优化图表的详细筛选功能（比如按月份查看）。 🛠️ 增加更多的射箭参数选择（比如弓型、箭型）。 🛠️ 界面美化：加入更平滑的转场动画。</p>
+<hr />
+<p><strong>💡 给新手的一句话：</strong> 代码不是用来“背”的，是用来“用”的。如果你觉得 <code>ViewModel</code> 很难懂，没关系，先看看它是怎么让分数跳动的，用多了自然就懂了。</p>
+<p><em>本文件将随项目进度持续更新。</em></p>

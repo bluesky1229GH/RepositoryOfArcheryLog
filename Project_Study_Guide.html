@@ -1,0 +1,69 @@
+<h1 id="archerylog-项目学习与演示指南-archerylog-project-study-demo-guide">ArcheryLog 项目学习与演示指南 (ArcheryLog Project Study &amp; Demo Guide)</h1>
+<hr />
+<h2 id="项目简介-project-overview">1. 项目简介 (Project Overview)</h2>
+<p><strong>ArcheryLog</strong> 是一款专为射箭运动员和爱好者设计的专业训练记录与分析工具。它将传统的纸笔记录数字化，利用现代移动开发技术解决了训练数据难记录、难统计、难分析的痛点。</p>
+<h3 id="核心亮点">核心亮点：</h3>
+<ul>
+<li><strong>交互式记录</strong>：通过可视化的电子靶面，实现“所见即所得”的落点记录。</li>
+<li><strong>专业化统计</strong>：支持按距离、场地类型进行筛选，自动生成训练趋势图。</li>
+<li><strong>全本地化存储</strong>：基于 Room 数据库，完全支持离线操作，数据安全稳定。</li>
+<li><strong>跨平台审美</strong>：采用现代化的深色模式设计，流畅的 Compose 动画效果。</li>
+</ul>
+<hr />
+<h2 id="技术架构解读-technical-architecture">2. 技术架构解读 (Technical Architecture)</h2>
+<p>该项目采用了 Android 最前沿的开发模式，是目前行业内“最佳实践”的体现：</p>
+<h3 id="核心技术栈-tech-stack">核心技术栈 (Tech Stack)</h3>
+<ul>
+<li><strong>语言</strong>：Kotlin (简洁、安全、支持协程)</li>
+<li><strong>UI 框架</strong>：Jetpack Compose (声明式 UI，现代且高效)</li>
+<li><strong>异步处理</strong>：Kotlin Coroutines &amp; Flow (响应式编程，解决并发问题)</li>
+<li><strong>本地数据库</strong>：Room Database (对 SQLite 的完美抽象，支持 SQL 查询)</li>
+<li><strong>架构模式</strong>：MVVM (Model-View-ViewModel) + Clean Architecture</li>
+<li><strong>依赖注入/生命周期控制</strong>：Android ViewModel &amp; Lifecycle</li>
+</ul>
+<h3 id="架构优势说明">架构优势说明：</h3>
+<ul>
+<li><strong>解耦性强</strong>：View 只负责展示，逻辑由 ViewModel 处理，数据源由 Repository 统一管理。</li>
+<li><strong>性能优异</strong>：UI 更新完全由数据流 (Flow)驱动，避免了传统的 UI 刷新的复杂操作。</li>
+<li><strong>可复用性</strong>：自定义组件（如 TargetFace）可以在多个屏幕中无缝复用。</li>
+</ul>
+<hr />
+<h2 id="面试演示流程-interview-demo-flow">3. 面试演示流程 (Interview Demo Flow)</h2>
+<p>建议按照以下顺序从“面”到“点”层层递进：</p>
+<h3 id="第一阶段项目起始与基本盘-foundation">第一阶段：项目起始与基本盘 (Foundation)</h3>
+<ol type="1">
+<li><strong>启动演示</strong>：打开应用，演示 <strong>Login/Signup</strong> 界面。讲解点：虽然是移动端本地应用，但实现了完善的用户账户系统。</li>
+<li><strong>记录中心</strong>：主页展示以往训练列表。讲解点：通过 <code>Flow</code> 动态订阅数据库，实现了 UI 对底层状态的响应。</li>
+</ol>
+<h3 id="第二阶段核心难点攻克-the-wow-factor">第二阶段：核心难点攻克 (The Wow Factor)</h3>
+<ol type="1">
+<li><strong>交互靶面 (TargetFace)</strong>：点击进入一轮训练。演示在靶面上随意点击记录坐标。</li>
+<li><strong>讲解点</strong>（重点）：靶面是使用 <code>Canvas API</code> <strong>原生手绘</strong>的，而非贴图。通过向量计算，精准识别用户点击在几环。展示 <strong>Undo/Redo</strong> 的逻辑严密性。</li>
+</ol>
+<h3 id="第三阶段深度分析与扩展-advanced-features">第三阶段：深度分析与扩展 (Advanced Features)</h3>
+<ol type="1">
+<li><strong>数据分析 (Statistics)</strong>：切换到统计页面展示曲线图。</li>
+<li><strong>讲解点</strong>：强调图表的平滑曲线是通过三次贝塞尔曲线算法 (<code>cubicTo</code>) 自己绘制的，这能够体现深入的底层开发能力。</li>
+</ol>
+<h3 id="第四阶段商业化落地-polish-scalability">第四阶段：商业化落地 (Polish &amp; Scalability)</h3>
+<ol type="1">
+<li><strong>多语言 (L10n)</strong>：在设置中切换语言。讲解点：项目不仅功能齐备，还具备了走向国际市场的可扩展性基础。</li>
+</ol>
+<hr />
+<h2 id="八股文关联点-key-interview-qa">4. 八股文关联点 (Key Interview Q&amp;A)</h2>
+<ul>
+<li><strong>为什么选 Compose?</strong> 声明式 UI，状态驱动，减少了代码碎片化，能够大幅缩短 UI 开发周期。</li>
+<li><strong>如何处理离线数据?</strong> 使用 Room 提供的 Room Database，它基于 SQLite 提供了类型安全且同步性能极高的封装。</li>
+<li><strong>如何处理异步任务?</strong> 全部使用 Coroutines。比如数据库读写都在 <code>Dispatchers.IO</code> 下运行，界面始终保持 60 帧以上的流畅度。</li>
+</ul>
+<hr />
+<h2 id="如何进一步学习与下载">5. 如何进一步学习与下载</h2>
+<ol type="1">
+<li><strong>导出为 PDF</strong>：您可以将此文档复制到 VS Code 或 Typora 等编辑器，选择 <code>Export to PDF</code>。</li>
+<li><strong>源码对应关系</strong>：
+<ul>
+<li>UI 逻辑及状态：<code>com.example.archerylog.ui.ArcheryViewModel</code></li>
+<li>自定义绘图逻辑：<code>com.example.archerylog.ui.screens.TargetFace.kt</code></li>
+<li>数据库交互：<code>com.example.archerylog.data.*</code></li>
+</ul></li>
+</ol>

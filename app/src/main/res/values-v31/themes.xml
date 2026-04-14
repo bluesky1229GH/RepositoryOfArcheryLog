@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.ArcheryLog" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Replace the system default splash screen icon (which includes the green background) with the transparent logo -->
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <!-- Set the splash screen background to match the app's standard background color -->
+        <item name="android:windowSplashScreenBackground">?android:attr/colorBackground</item>
+    </style>
+</resources>

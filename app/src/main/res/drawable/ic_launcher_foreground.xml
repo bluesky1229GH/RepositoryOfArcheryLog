@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- 靶纸白色外圈 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 54,54 m -35,0 a 35,35 0 1,0 70,0 a 35,35 0 1,0 -70,0" />
+    <!-- 靶纸黑圈 -->
+    <path
+        android:fillColor="#212121"
+        android:pathData="M 54,54 m -28,0 a 28,28 0 1,0 56,0 a 28,28 0 1,0 -56,0" />
+    <!-- 靶纸蓝圈 -->
+    <path
+        android:fillColor="#42A5F5"
+        android:pathData="M 54,54 m -21,0 a 21,21 0 1,0 42,0 a 21,21 0 1,0 -42,0" />
+    <!-- 靶纸红圈 -->
+    <path
+        android:fillColor="#EF5350"
+        android:pathData="M 54,54 m -14,0 a 14,14 0 1,0 28,0 a 14,14 0 1,0 -28,0" />
+    <!-- 靶纸黄心 (内十环) -->
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M 54,54 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
+    
+    <!-- 中心的十字瞄准星 -->
+    <path
+        android:strokeColor="#212121"
+        android:strokeWidth="1"
+        android:pathData="M 54,54 m -2,0 a 2,2 0 1,0 4,0 a 2,2 0 1,0 -4,0" />
+    <path
+        android:strokeColor="#212121"
+        android:strokeWidth="1"
+        android:pathData="M 54,49 L 54,59 M 49,54 L 59,54" />
+</vector>
