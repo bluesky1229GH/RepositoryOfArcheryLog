@@ -40,6 +40,16 @@ fun SessionDetailsScreen(
                     IconButton(onClick = onBack) { 
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
+                    val maxPossible = endsWithShots.sumOf { it.shots.size * 10 }
+                    Text(
+                        text = "${l10n.totalScore}: $grandTotal / $maxPossible",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(end = 16.dp),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             )
         }

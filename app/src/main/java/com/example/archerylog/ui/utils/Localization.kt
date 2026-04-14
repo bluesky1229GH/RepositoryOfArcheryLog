@@ -414,7 +414,7 @@ class L10n(val language: AppLanguage) {
     }
     val totalScore = when(language) {
         AppLanguage.ENGLISH -> "Total Score"
-        AppLanguage.JAPANESE -> "合計スコア"
+        AppLanguage.JAPANESE -> "合計"
         AppLanguage.CHINESE -> "总分"
     }
     val nextEnd = when(language) {
