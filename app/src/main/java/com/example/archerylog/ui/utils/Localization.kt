@@ -57,7 +57,7 @@ class L10n(val language: AppLanguage) {
     }
     val last24h = when(language) {
         AppLanguage.ENGLISH -> "Last 24h"
-        AppLanguage.JAPANESE -> "过去24時間"
+        AppLanguage.JAPANESE -> "過去24時間"
         AppLanguage.CHINESE -> "过去24小时"
     }
     val lastWeek = when(language) {
@@ -275,7 +275,7 @@ class L10n(val language: AppLanguage) {
     }
     val chooseGallery = when(language) {
         AppLanguage.ENGLISH -> "Choose Gallery"
-        AppLanguage.JAPANESE -> "ギャラリーから选择"
+        AppLanguage.JAPANESE -> "ギャラリーから選択"
         AppLanguage.CHINESE -> "从相册选择"
     }
     val username = when(language) {
@@ -414,7 +414,7 @@ class L10n(val language: AppLanguage) {
     }
     val signupButton = when(language) {
         AppLanguage.ENGLISH -> "Sign Up"
-        AppLanguage.JAPANESE -> "注册"
+        AppLanguage.JAPANESE -> "登録"
         AppLanguage.CHINESE -> "注册"
     }
     val noAccount = when(language) {
@@ -446,11 +446,11 @@ class L10n(val language: AppLanguage) {
     }
     val totalScore = when(language) {
         AppLanguage.ENGLISH -> "Total Score"
-        AppLanguage.JAPANESE -> "合计"
+        AppLanguage.JAPANESE -> "合計"
         AppLanguage.CHINESE -> "总分"
     }
     val nextEnd = when(language) {
-        AppLanguage.ENGLISH -> "Next End"
+        AppLanguage.ENGLISH -> "Next"
         AppLanguage.JAPANESE -> "次のエンド"
         AppLanguage.CHINESE -> "下一组"
     }
