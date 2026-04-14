@@ -1,6 +1,8 @@
 package com.example.archerylog.ui.screens
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -13,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
 import androidx.compose.animation.*
 import androidx.compose.material.icons.filled.Close
 import kotlinx.coroutines.launch
@@ -24,26 +27,19 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.gestures.transformable
-import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.background
 import com.example.archerylog.data.ArcherySession
 import com.example.archerylog.data.LocationType
 import com.example.archerylog.ui.ArcheryViewModel
 import com.example.archerylog.ui.utils.L10n
 
-enum class TimeRangeFilter {
-    ALL, DAY, WEEK, MONTH, YEAR
-}
+enum class TimeRangeFilter { ALL, DAY, WEEK, MONTH, YEAR }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,10 +48,10 @@ fun StatisticsScreen(
 ) {
     val allSessions by viewModel.allSessions.collectAsState()
     val allEnds by viewModel.allEndsWithMetadata.collectAsState()
+    val allShots by viewModel.allShotsWithMetadata.collectAsState()
     val currentLanguage by viewModel.currentLanguage.collectAsState()
     val l10n = L10n(currentLanguage)
 
-    // AI Chat State
     var showAiChat by remember { mutableStateOf(false) }
     var aiQuestion by remember { mutableStateOf("") }
     val aiResponse by viewModel.aiResponse.collectAsState()
@@ -63,18 +59,11 @@ fun StatisticsScreen(
     
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    var isCurrentResponseSaved by remember { mutableStateOf(false) }
 
-    // Reset saved state when new response comes
-    LaunchedEffect(aiResponse) {
-        isCurrentResponseSaved = false
-    }
-
-    var selectedLocation by remember { mutableStateOf<LocationType?>(null) } // null means ALL
-    var selectedDistance by remember { mutableStateOf<Int?>(null) } // null means ALL
+    var selectedLocation by remember { mutableStateOf<LocationType?>(null) }
+    var selectedDistance by remember { mutableStateOf<Int?>(null) }
     var selectedTimeRange by remember { mutableStateOf(TimeRangeFilter.ALL) }
     
-    // Extract unique distances from sessions
     val availableDistances = remember(allSessions) {
         allSessions.map { it.distance }.distinct().sorted()
     }
@@ -89,29 +78,41 @@ fun StatisticsScreen(
             TimeRangeFilter.YEAR -> now - (365 * dayMs)
             TimeRangeFilter.ALL -> 0L
         }
-        
         allEnds.filter { end ->
-            (end.timestamp >= cutoff) &&
-            (end.endTotalScore > 0) &&
+            end.timestamp >= cutoff && end.endTotalScore > 0 &&
             (selectedLocation == null || end.locationType == selectedLocation) &&
             (selectedDistance == null || end.distance == selectedDistance)
-        }.sortedWith(compareBy({ it.timestamp }, { it.endNumber }))
+        }.sortedBy { it.timestamp }
+    }
+
+    val filteredShots = remember(allShots, selectedLocation, selectedDistance, selectedTimeRange) {
+        val now = System.currentTimeMillis()
+        val cutoff = when (selectedTimeRange) {
+            TimeRangeFilter.DAY -> now - (24L * 60 * 60 * 1000)
+            TimeRangeFilter.WEEK -> now - (7L * 24 * 60 * 60 * 1000)
+            TimeRangeFilter.MONTH -> now - (30L * 24 * 60 * 60 * 1000)
+            TimeRangeFilter.YEAR -> now - (365L * 24 * 60 * 60 * 1000)
+            TimeRangeFilter.ALL -> 0L
+        }
+        allShots.filter { shot ->
+            shot.timestamp >= cutoff &&
+            (selectedLocation == null || shot.locationType == selectedLocation) &&
+            (selectedDistance == null || shot.distance == selectedDistance)
+        }
     }
 
     val filteredSessionsCount = remember(allSessions, selectedLocation, selectedDistance, selectedTimeRange) {
         val now = System.currentTimeMillis()
-        val dayMs = 24L * 60 * 60 * 1000
         val cutoff = when (selectedTimeRange) {
-            TimeRangeFilter.DAY -> now - dayMs
-            TimeRangeFilter.WEEK -> now - (7 * dayMs)
-            TimeRangeFilter.MONTH -> now - (30 * dayMs)
-            TimeRangeFilter.YEAR -> now - (365 * dayMs)
+            TimeRangeFilter.DAY -> now - (24L * 60 * 60 * 1000)
+            TimeRangeFilter.WEEK -> now - (7 * 24L * 60 * 60 * 1000)
+            TimeRangeFilter.MONTH -> now - (30 * 24L * 60 * 60 * 1000)
+            TimeRangeFilter.YEAR -> now - (365 * 24L * 60 * 60 * 1000)
             TimeRangeFilter.ALL -> 0L
         }
-        allSessions.count { session ->
-            session.timestamp >= cutoff && session.totalShots > 0 &&
-            (selectedLocation == null || session.locationType == selectedLocation) &&
-            (selectedDistance == null || session.distance == selectedDistance)
+        allSessions.count { it.timestamp >= cutoff && it.totalShots > 0 &&
+            (selectedLocation == null || it.locationType == selectedLocation) &&
+            (selectedDistance == null || it.distance == selectedDistance)
         }
     }
 
@@ -122,115 +123,39 @@ fun StatisticsScreen(
                 title = { Text(l10n.dashboardTitle) },
                 actions = {
                     IconButton(onClick = { showAiChat = true }) {
-                        Icon(
-                            Icons.Default.AutoAwesome, 
-                            contentDescription = "AI Coach",
-                            tint = MaterialTheme.colorScheme.onSurface 
-                        )
+                        Icon(Icons.Default.AutoAwesome, contentDescription = "AI Coach", tint = MaterialTheme.colorScheme.onSurface)
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                }
             )
         }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            // Top Dropdown for AI Chat
-            AnimatedVisibility(
-                visible = showAiChat,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut(),
-                modifier = Modifier.zIndex(1f) // Ensure it's on top
-            ) {
+            if (showAiChat) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth().shadow(8.dp),
+                    modifier = Modifier.fillMaxWidth().shadow(8.dp).zIndex(2f),
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                l10n.aiConsultant,
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            IconButton(onClick = { 
-                                showAiChat = false 
-                                viewModel.clearAiResponse()
-                            }) {
-                                Icon(Icons.Default.Close, contentDescription = "Close")
-                            }
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(l10n.aiConsultant, style = MaterialTheme.typography.titleLarge)
+                            IconButton(onClick = { showAiChat = false }) { Icon(Icons.Default.Close, null) }
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
                         OutlinedTextField(
                             value = aiQuestion,
                             onValueChange = { aiQuestion = it },
                             modifier = Modifier.fillMaxWidth(),
                             placeholder = { Text(l10n.askAiPlaceholder) },
                             trailingIcon = {
-                                if (isAiLoading) {
-                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                                } else {
-                                    IconButton(onClick = { viewModel.askGemini(aiQuestion) }) {
-                                        Icon(Icons.Default.AutoAwesome, contentDescription = null)
-                                    }
+                                IconButton(onClick = { viewModel.askGemini(aiQuestion) }) {
+                                    if (isAiLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                    else Icon(Icons.Default.AutoAwesome, null)
                                 }
                             }
                         )
-                        
                         if (aiResponse != null) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                                    .padding(16.dp)
-                            ) {
-                                Box(modifier = Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState())) {
-                                    Text(aiResponse!!, style = MaterialTheme.typography.bodyMedium)
-                                }
-                                Divider(
-                                    modifier = Modifier.padding(vertical = 12.dp),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    TextButton(onClick = { 
-                                        if (!isCurrentResponseSaved) {
-                                            viewModel.saveAiFavorite(aiQuestion, aiResponse!!) 
-                                            isCurrentResponseSaved = true
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar(l10n.savedSuccess)
-                                            }
-                                        }
-                                    }) {
-                                        Icon(
-                                            imageVector = if (isCurrentResponseSaved) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp),
-                                            tint = if (isCurrentResponseSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            if (isCurrentResponseSaved) l10n.savedSuccess else l10n.saveToFavorites,
-                                            color = if (isCurrentResponseSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
+                            Box(modifier = Modifier.heightIn(max = 240.dp).padding(top = 16.dp).verticalScroll(rememberScrollState())) {
+                                Text(aiResponse!!, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }
@@ -238,36 +163,28 @@ fun StatisticsScreen(
             }
 
             Column(
-                modifier = Modifier.fillMaxSize()
-                    .padding(16.dp)
+                modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())
             ) {
-                // Time Range Filter
                 Text(l10n.timeRange, fontWeight = FontWeight.SemiBold)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     item { FilterChip(selected = selectedTimeRange == TimeRangeFilter.ALL, onClick = { selectedTimeRange = TimeRangeFilter.ALL }, label = { Text(l10n.allTime) }) }
-                    item { FilterChip(selected = selectedTimeRange == TimeRangeFilter.DAY, onClick = { selectedTimeRange = TimeRangeFilter.DAY }, label = { Text(l10n.last24h) }) }
                     item { FilterChip(selected = selectedTimeRange == TimeRangeFilter.WEEK, onClick = { selectedTimeRange = TimeRangeFilter.WEEK }, label = { Text(l10n.lastWeek) }) }
                     item { FilterChip(selected = selectedTimeRange == TimeRangeFilter.MONTH, onClick = { selectedTimeRange = TimeRangeFilter.MONTH }, label = { Text(l10n.lastMonth) }) }
                     item { FilterChip(selected = selectedTimeRange == TimeRangeFilter.YEAR, onClick = { selectedTimeRange = TimeRangeFilter.YEAR }, label = { Text(l10n.lastYear) }) }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
 
-                // Location Filter
-                Text(l10n.locationFilter, fontWeight = FontWeight.SemiBold)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = selectedLocation == null, onClick = { selectedLocation = null }, label = { Text(l10n.all) })
-                    FilterChip(selected = selectedLocation == LocationType.INDOOR, onClick = { selectedLocation = LocationType.INDOOR }, label = { Text(l10n.indoor) })
-                    FilterChip(selected = selectedLocation == LocationType.OUTDOOR, onClick = { selectedLocation = LocationType.OUTDOOR }, label = { Text(l10n.outdoor) })
-                }
-                
                 Spacer(modifier = Modifier.height(8.dp))
-                
-                // Distance Filter
+                Text(l10n.locationFilter, fontWeight = FontWeight.SemiBold)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item { FilterChip(selected = selectedLocation == null, onClick = { selectedLocation = null }, label = { Text(l10n.all) }) }
+                    item { FilterChip(selected = selectedLocation == LocationType.INDOOR, onClick = { selectedLocation = LocationType.INDOOR }, label = { Text(l10n.indoor) }) }
+                    item { FilterChip(selected = selectedLocation == LocationType.OUTDOOR, onClick = { selectedLocation = LocationType.OUTDOOR }, label = { Text(l10n.outdoor) }) }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(l10n.distanceFilter, fontWeight = FontWeight.SemiBold)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    item {
-                        FilterChip(selected = selectedDistance == null, onClick = { selectedDistance = null }, label = { Text(l10n.all) })
-                    }
+                    item { FilterChip(selected = selectedDistance == null, onClick = { selectedDistance = null }, label = { Text(l10n.all) }) }
                     items(availableDistances) { dist ->
                         FilterChip(selected = selectedDistance == dist, onClick = { selectedDistance = dist }, label = { Text("${dist}m") })
                     }
@@ -275,39 +192,103 @@ fun StatisticsScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Data Content (Chart or No Data)
                 if (filteredEnds.isEmpty()) {
-                    Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.height(300.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(l10n.noDataMatch, color = Color.Gray)
                     }
                 } else {
-                    Row(
+                    Card(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(l10n.trendTitle, fontWeight = FontWeight.Bold)
-                        Text("${filteredSessionsCount} ${l10n.navRecords}", color = MaterialTheme.colorScheme.primary)
-                    }
-                    if (filteredEnds.size >= 2) {
-                        val sdf = java.text.SimpleDateFormat("MM/dd", java.util.Locale.getDefault())
-                        val dateRange = "${sdf.format(filteredEnds.first().timestamp)} - ${sdf.format(filteredEnds.last().timestamp)}"
-                        Text(dateRange, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.fillMaxWidth().height(360.dp)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     ) {
-                        Column(modifier = Modifier.fillMaxSize()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(l10n.trendTitle, fontWeight = FontWeight.Bold)
+                                Text("${filteredSessionsCount}场", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
                             EndTrendChart(
                                 ends = filteredEnds,
                                 timeRange = selectedTimeRange,
-                                modifier = Modifier.weight(1f).padding(top = 32.dp, start = 40.dp, end = 24.dp, bottom = 12.dp)
+                                l10n = l10n,
+                                modifier = Modifier.height(240.dp).fillMaxWidth()
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(l10n.ringDistribution, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            RingDistributionChart(shots = filteredShots, l10n = l10n)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(100.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun RingDistributionChart(shots: List<com.example.archerylog.data.ShotWithMetadata>, l10n: L10n) {
+    if (shots.isEmpty()) return
+    val total = shots.size.toFloat()
+    
+    val gold = shots.count { it.numericValue >= 9 } / total
+    val red = shots.count { it.numericValue in 7..8 } / total
+    val blue = shots.count { it.numericValue in 5..6 } / total
+    val black = shots.count { it.numericValue in 3..4 } / total
+    val white = shots.count { it.numericValue in 0..2 } / total
+
+    val colors = listOf(
+        Color(0xFFFFD700),
+        Color(0xFFF44336),
+        Color(0xFF2196F3),
+        Color(0xFF212121),
+        Color(0xFFEEEEEE)
+    )
+    val labels = listOf(l10n.goldZone, l10n.redZone, l10n.blueZone, l10n.blackZone, l10n.whiteZone)
+    val values = listOf(gold, red, blue, black, white)
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(32.dp)
+                .shadow(2.dp, RoundedCornerShape(8.dp))
+                .background(Color.Gray.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                .border(1.5.dp, Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(8.dp))
+        ) {
+            values.forEachIndexed { index, ratio ->
+                if (ratio > 0f) {
+                    Box(
+                        modifier = Modifier
+                            .weight(ratio.coerceAtLeast(0.01f))
+                            .fillMaxHeight()
+                            .background(colors[index])
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            values.forEachIndexed { index, ratio ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(12.dp).background(colors[index], RoundedCornerShape(2.dp)))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(labels[index], fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    Text("${(ratio * 100).toInt()}%", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
         }
@@ -318,14 +299,14 @@ fun StatisticsScreen(
 fun EndTrendChart(
     ends: List<com.example.archerylog.data.EndWithMetadata>, 
     timeRange: TimeRangeFilter,
+    l10n: L10n,
     modifier: Modifier = Modifier
 ) {
     if (ends.isEmpty()) return
     val chartColor = MaterialTheme.colorScheme.primary
-    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-    val textColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+    val textColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
 
-    // Zoom and Pan States
     var zoomScale by remember { mutableStateOf(1f) }
     var scrollOffset by remember { mutableStateOf(0f) }
 
@@ -344,39 +325,24 @@ fun EndTrendChart(
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val width = size.width
                 val height = size.height
-
                 val maxScroll = (zoomScale - 1f) * width
                 val safeOffset = scrollOffset.coerceIn(-maxScroll, 0f)
-                if (scrollOffset != safeOffset) {
-                    scrollOffset = safeOffset
-                }
+                if (scrollOffset != safeOffset) scrollOffset = safeOffset
 
-                // Draw Background Grid
                 val gridLines = 5
                 for (i in 0..gridLines) {
-                    val score = i * 2 // 0, 2, 4, 6, 8, 10
+                    val score = i * 2
                     val y = height - (score.toFloat() / 10f * height)
                     drawLine(color = gridColor, start = Offset(0f, y), end = Offset(width, y), strokeWidth = 1.dp.toPx())
-                    
-                    // Y-AXIS NUMBERS
                     drawContext.canvas.nativeCanvas.drawText(
-                        score.toString(), -15.dp.toPx(), y + 4.dp.toPx(),
-                        android.graphics.Paint().apply {
-                            color = textColor.toArgb()
-                            textSize = 10.sp.toPx()
-                            textAlign = android.graphics.Paint.Align.RIGHT
-                        }
+                        score.toString(), -12.dp.toPx(), y + 4.dp.toPx(),
+                        android.graphics.Paint().apply { color = textColor.toArgb(); textSize = 10.sp.toPx(); textAlign = android.graphics.Paint.Align.RIGHT }
                     )
                 }
 
-                chartColor // Dummy use
                 clipRect(0f, 0f, width, height) {
                     val points = ends.mapIndexed { index, end ->
-                        val px = if (ends.size > 1) {
-                            (index.toFloat() / (ends.size - 1).toFloat()) * width * zoomScale + scrollOffset
-                        } else {
-                            width / 2f
-                        }
+                        val px = if (ends.size > 1) (index.toFloat() / (ends.size - 1).toFloat()) * width * zoomScale + scrollOffset else width/2f
                         val py = height - ((end.endTotalScore.toFloat() / 6f) / 10f * height)
                         Offset(px, py)
                     }
@@ -385,41 +351,27 @@ fun EndTrendChart(
                         val path = Path()
                         path.moveTo(points.first().x, points.first().y)
                         for (i in 1 until points.size) {
-                            val p0 = points[i - 1]
-                            val p1 = points[i]
+                            val p0 = points[i - 1]; val p1 = points[i]
                             val cx = (p0.x + p1.x) / 2
                             path.cubicTo(cx, p0.y, cx, p1.y, p1.x, p1.y)
                         }
-                        
-                        val fillPath = Path()
-                        fillPath.addPath(path)
-                        fillPath.lineTo(points.last().x, height)
-                        fillPath.lineTo(points.first().x, height)
-                        fillPath.close()
-
-                        drawPath(fillPath, Brush.verticalGradient(listOf(chartColor.copy(0.4f), Color.Transparent)))
                         drawPath(path, chartColor, style = Stroke(2.5.dp.toPx()))
+                        val fillPath = Path().apply { addPath(path); lineTo(points.last().x, height); lineTo(points.first().x, height); close() }
+                        drawPath(fillPath, Brush.verticalGradient(listOf(chartColor.copy(0.2f), Color.Transparent)))
                     }
-                    
-                    for (p in points) {
-                        if (p.x in 0f..width) {
-                            drawCircle(chartColor, 3.5.dp.toPx(), p)
-                            drawCircle(Color.White, 1.2.dp.toPx(), p)
-                        }
-                    }
+                    points.forEach { p -> if (p.x in 0f..width) drawCircle(chartColor, 3.dp.toPx(), p) }
                 }
 
-                // X-AXIS LABELS - Based on sample indices
-                val sdf = java.text.SimpleDateFormat(if(timeRange == TimeRangeFilter.DAY) "HH:mm" else "MM/dd")
+                val sdf = java.text.SimpleDateFormat("MM/dd")
                 val total = ends.size
                 if (total > 0) {
                     val step = (total / (3 * zoomScale).toInt()).coerceAtLeast(1)
                     for (i in 0 until total step step) {
-                        val labelX = (i.toFloat() / (total - 1).coerceAtLeast(1).toFloat()) * width * zoomScale + scrollOffset
-                        if (labelX in -50f..width + 50f) {
+                        val lx = (i.toFloat() / (total - 1).coerceAtLeast(1).toFloat()) * width * zoomScale + scrollOffset
+                        if (lx in -50f..width + 50f) {
                             drawContext.canvas.nativeCanvas.drawText(
-                                sdf.format(java.util.Date(ends[i].timestamp)), labelX, height + 35.dp.toPx(),
-                                android.graphics.Paint().apply { color = textColor.toArgb(); textSize = 11.sp.toPx(); textAlign = android.graphics.Paint.Align.CENTER }
+                                sdf.format(java.util.Date(ends[i].timestamp)), lx, height + 24.dp.toPx(),
+                                android.graphics.Paint().apply { color = textColor.toArgb(); textSize = 10.sp.toPx(); textAlign = android.graphics.Paint.Align.CENTER }
                             )
                         }
                     }
@@ -427,50 +379,11 @@ fun EndTrendChart(
             }
         }
         
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Final Slider Row
-        Row(
-            verticalAlignment = Alignment.CenterVertically, 
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 8.dp)
-        ) {
-            val viewModel: ArcheryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-            val l10n = L10n(viewModel.currentLanguage.collectAsState().value)
-            Text("${l10n.zoom} ", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Slider(
-                value = zoomScale,
-                onValueChange = { zoomScale = it },
-                valueRange = 1f..10f,
-                modifier = Modifier.weight(1f).height(32.dp)
-            )
-            Text("${zoomScale.toInt()}x", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = chartColor, modifier = Modifier.width(30.dp))
+        Spacer(modifier = Modifier.height(32.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+            Text(l10n.zoom, fontSize = 10.sp, color = textColor)
+            Slider(value = zoomScale, onValueChange = { zoomScale = it }, valueRange = 1f..10f, modifier = Modifier.weight(1f).height(24.dp))
+            Text("${zoomScale.toInt()}x", fontSize = 10.sp, color = chartColor, modifier = Modifier.width(24.dp))
         }
     }
-}
-
-// Helper functions to keep code clean
-fun startTime(timeRange: TimeRangeFilter, ends: List<com.example.archerylog.data.EndWithMetadata>): Long {
-    val now = System.currentTimeMillis()
-    val dayMs = 24L * 60 * 60 * 1000
-    return when (timeRange) {
-        TimeRangeFilter.DAY -> now - dayMs
-        TimeRangeFilter.WEEK -> now - (7 * dayMs)
-        TimeRangeFilter.MONTH -> now - (30 * dayMs)
-        TimeRangeFilter.YEAR -> now - (365 * dayMs)
-        TimeRangeFilter.ALL -> if(ends.isEmpty()) now else ends.minOf { it.timestamp }
-    }
-}
-
-fun endTime(timeRange: TimeRangeFilter, ends: List<com.example.archerylog.data.EndWithMetadata>): Long {
-    val now = System.currentTimeMillis()
-    return when (timeRange) {
-        TimeRangeFilter.ALL -> if(ends.isEmpty()) now else ends.maxOf { it.timestamp }
-        else -> now
-    }
-}
-
-fun duration(timeRange: TimeRangeFilter, ends: List<com.example.archerylog.data.EndWithMetadata>): Long {
-    val start = startTime(timeRange, ends)
-    val end = endTime(timeRange, ends)
-    return (end - start).coerceAtLeast(1)
 }

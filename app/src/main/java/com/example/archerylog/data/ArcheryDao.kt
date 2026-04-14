@@ -88,6 +88,15 @@ interface ArcheryDao {
     """)
     fun getAllEndsWithMetadataForUser(userId: Long): Flow<List<EndWithMetadata>>
 
+    @Query("""
+        SELECT shots.score, shots.numericValue, ends.timestamp, sessions.locationType, sessions.distance 
+        FROM shots 
+        JOIN ends ON shots.endId = ends.id
+        JOIN sessions ON ends.sessionId = sessions.id 
+        WHERE sessions.userId = :userId
+    """)
+    fun getAllShotsWithMetadataForUser(userId: Long): Flow<List<ShotWithMetadata>>
+
     @Insert
     suspend fun insertAiFavorite(favorite: AiFavorite): Long
 

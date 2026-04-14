@@ -57,7 +57,7 @@ class L10n(val language: AppLanguage) {
     }
     val last24h = when(language) {
         AppLanguage.ENGLISH -> "Last 24h"
-        AppLanguage.JAPANESE -> "過去24時間"
+        AppLanguage.JAPANESE -> "过去24時間"
         AppLanguage.CHINESE -> "过去24小时"
     }
     val lastWeek = when(language) {
@@ -122,6 +122,7 @@ class L10n(val language: AppLanguage) {
     }
     val notes = when(language) {
         AppLanguage.ENGLISH -> "• Clicking outside the expanded target will cancel current record.\n• Ensure to tap 'Finish' after 6 ends to save."
+        AppLanguage.JAPANESE -> "• 拡大されたターゲットの外側をタップすると、現在の記録がキャンセルされます。\n• 6エンド終了後、必ず「記録完了」をタップして保存してください。"
         AppLanguage.CHINESE -> "• 展开靶纸后，点击靶纸周围区域将放弃当前记录。\n• 完成6轮练习后，务必点击「记录完成」以保存数据。"
     }
     val close = when(language) {
@@ -138,6 +139,38 @@ class L10n(val language: AppLanguage) {
         AppLanguage.ENGLISH -> "Sessions (Chronological)"
         AppLanguage.JAPANESE -> "セッション（時系列）"
         AppLanguage.CHINESE -> "训练场次（按时间）"
+    }
+
+    // New Analysis Strings
+    val ringDistribution = when(language) {
+        AppLanguage.ENGLISH -> "Ring Distribution"
+        AppLanguage.JAPANESE -> "环值分布"
+        AppLanguage.CHINESE -> "环值稳定度分布"
+    }
+    val goldZone = when(language) {
+        AppLanguage.ENGLISH -> "Gold (9-10)"
+        AppLanguage.JAPANESE -> "イエロー (9-10)"
+        AppLanguage.CHINESE -> "黄区 (9-10环)"
+    }
+    val redZone = when(language) {
+        AppLanguage.ENGLISH -> "Red (7-8)"
+        AppLanguage.JAPANESE -> "レッド (7-8)"
+        AppLanguage.CHINESE -> "红区 (7-8环)"
+    }
+    val blueZone = when(language) {
+        AppLanguage.ENGLISH -> "Blue (5-6)"
+        AppLanguage.JAPANESE -> "ブルー (5-6)"
+        AppLanguage.CHINESE -> "蓝区 (5-6环)"
+    }
+    val blackZone = when(language) {
+        AppLanguage.ENGLISH -> "Black (3-4)"
+        AppLanguage.JAPANESE -> "ブラック (3-4)"
+        AppLanguage.CHINESE -> "黑区 (3-4环)"
+    }
+    val whiteZone = when(language) {
+        AppLanguage.ENGLISH -> "White (0-2)"
+        AppLanguage.JAPANESE -> "ホワイト/脱靶 (0-2)"
+        AppLanguage.CHINESE -> "白区/脱靶 (0-2环)"
     }
 
     // Records
@@ -242,7 +275,7 @@ class L10n(val language: AppLanguage) {
     }
     val chooseGallery = when(language) {
         AppLanguage.ENGLISH -> "Choose Gallery"
-        AppLanguage.JAPANESE -> "ギャラリーから選択"
+        AppLanguage.JAPANESE -> "ギャラリーから选择"
         AppLanguage.CHINESE -> "从相册选择"
     }
     val username = when(language) {
@@ -381,6 +414,7 @@ class L10n(val language: AppLanguage) {
     }
     val signupButton = when(language) {
         AppLanguage.ENGLISH -> "Sign Up"
+        AppLanguage.JAPANESE -> "注册"
         AppLanguage.CHINESE -> "注册"
     }
     val noAccount = when(language) {
@@ -412,6 +446,7 @@ class L10n(val language: AppLanguage) {
     }
     val totalScore = when(language) {
         AppLanguage.ENGLISH -> "Total Score"
+        AppLanguage.JAPANESE -> "合计"
         AppLanguage.CHINESE -> "总分"
     }
     val nextEnd = when(language) {

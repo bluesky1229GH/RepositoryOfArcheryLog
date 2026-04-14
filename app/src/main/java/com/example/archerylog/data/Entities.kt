@@ -102,6 +102,14 @@ data class EndWithMetadata(
     val distance: Int
 )
 
+data class ShotWithMetadata(
+    val score: String,
+    val numericValue: Int,
+    val timestamp: Long,
+    val locationType: LocationType,
+    val distance: Int
+)
+
 @Entity(
     tableName = "ai_favorites",
     foreignKeys = [

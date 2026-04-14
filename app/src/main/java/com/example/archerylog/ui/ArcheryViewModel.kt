@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 class ArcheryViewModel(application: Application) : AndroidViewModel(application) {
     
-    // 1. AI Configuration (2026 Stable Standard)
+    // 1. AI Configuration
     private val generativeModel by lazy {
         GenerativeModel(
             modelName = "gemini-2.5-flash",
@@ -69,7 +69,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     val isLoggedIn: Boolean get() = _currentUserId.value != -1L
 
     init {
-        // Safety check: If DB was wiped (destructive migration), the cached ID might no longer exist.
         viewModelScope.launch {
             val id = _currentUserId.value
             if (id != -1L) {
@@ -96,6 +95,11 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         if (id == -1L) flowOf(emptyList()) else repository.getAllEndsWithMetadataForUser(id)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val allShotsWithMetadata: StateFlow<List<ShotWithMetadata>> = _currentUserId.flatMapLatest { id ->
+        if (id == -1L) flowOf(emptyList()) else repository.getAllShotsWithMetadataForUser(id)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val allUsers: StateFlow<List<User>> = repository.allUsers.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -109,9 +113,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             try {
                 repository.insertAiFavorite(AiFavorite(userId = userId, question = question, answer = answer))
-            } catch (e: Exception) {
-                // Silently handle or log if user session is invalid during migration
-            }
+            } catch (e: Exception) {}
         }
     }
     fun deleteAiFavorite(id: Long) {
@@ -130,7 +132,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         prefs.edit().putString("current_language", language.name).apply()
     }
 
-    // 3. Active Session (Scoring Engine) State
+    // 3. Active Session State
     var currentSessionTitle by mutableStateOf("")
     var currentVenue by mutableStateOf("")
     var currentDistance by mutableStateOf(30)
@@ -160,9 +162,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     @OptIn(ExperimentalCoroutinesApi::class)
     val currentEndShots: StateFlow<List<Shot>> = _currentEndId.flatMapLatest { id ->
         if (id == -1L) flowOf(emptyList()) else flow {
-            // Since we need to react to changes, we'll poll or use a custom flow if Repository provided one
-            // For now, we'll use a trick or assume repository has a way. 
-            // Better: use getEndsWithShotsForSession and filter
             emitAll(repository.getEndsWithShotsForSession(_currentSessionId.value).map { list ->
                 list.find { it.end.id == id }?.shots ?: emptyList()
             })
@@ -220,12 +219,9 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             val numericValue = if (score == "X") 10 else score.toIntOrNull() ?: 0
             repository.insertShot(Shot(endId = endId, score = score, numericValue = numericValue, x = x, y = y))
             
-            // Update end & session score
             repository.addScoreToEnd(endId, numericValue)
             repository.modifySessionScore(_currentSessionId.value, numericValue, 1)
             
-            // Auto check if end is complete (assuming 6 shots/end as per screens)
-            // Use the updated list from the repository directly to be accurate
             val updatedShots = repository.getShotsForEnd(endId)
             if (updatedShots.size >= 6) {
                 _showEndCompletionDialog.value = true
@@ -237,22 +233,15 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             val shots = currentEndShots.value
             if (shots.isEmpty()) {
-                // If it's the start of an end, allow abandonment or simple finish
-                if (_currentEndNumber.value == 1) {
-                    abandonSession()
-                } else {
-                    finishSession()
-                }
+                if (_currentEndNumber.value == 1) abandonSession() else finishSession()
                 return@launch
             }
             
             val lastShot = shots.last()
             repository.deleteShot(lastShot.id)
-            
             val scoreVal = if (lastShot.score == "X") 10 else lastShot.score.toIntOrNull() ?: 0
             repository.addScoreToEnd(_currentEndId.value, -scoreVal)
             repository.modifySessionScore(_currentSessionId.value, -scoreVal, -1)
-            
             _showEndCompletionDialog.value = false
         }
     }
@@ -260,12 +249,10 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     fun moveToNextEnd() {
         val sessionId = _currentSessionId.value
         if (sessionId == -1L) return
-        
         if (_currentEndNumber.value >= 6) {
             finishSession()
             return
         }
-
         viewModelScope.launch {
             _showEndCompletionDialog.value = false
             startNewEnd(sessionId, _currentEndNumber.value + 1)
@@ -277,9 +264,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         val isEmpty = currentSessionEndsWithShots.value.all { it.shots.isEmpty() }
         
         if (sessionId != -1L && isEmpty) {
-            viewModelScope.launch {
-                repository.deleteSession(sessionId)
-            }
+            viewModelScope.launch { repository.deleteSession(sessionId) }
         }
 
         _isSessionActive.value = false
@@ -298,16 +283,10 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun dismissEndDialog() {
-        _showEndCompletionDialog.value = false
-    }
+    fun dismissEndDialog() { _showEndCompletionDialog.value = false }
 
     fun confirmEndAndContinue() {
-        if (_currentEndNumber.value >= 6) { // Final end?
-            finishSession()
-        } else {
-            moveToNextEnd()
-        }
+        if (_currentEndNumber.value >= 6) finishSession() else moveToNextEnd()
     }
 
     // 5. User Operations
@@ -353,11 +332,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         if (id != -1L) viewModelScope.launch { repository.updatePassword(id, newHash) }
     }
 
-    fun updatePassword(userId: Long, newHash: String) {
-        // Redundant or for admin tools
-        viewModelScope.launch { repository.updatePassword(userId, newHash) }
-    }
-
     fun updateEmail(email: String) {
         val id = _currentUserId.value
         if (id != -1L) viewModelScope.launch { repository.updateEmail(id, email) }
@@ -368,15 +342,10 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         if (id != -1L) viewModelScope.launch { repository.updateAvatarUri(id, uri) }
     }
 
-    // 6. DB Proxies & Session Management
-    fun getEndsWithShotsForSession(sessionId: Long) = repository.getEndsWithShotsForSession(sessionId)
+    // 6. DB Proxies
     fun getSessionDetails(sessionId: Long) = repository.getEndsWithShotsForSession(sessionId)
+    fun getEndsWithShotsForSession(sessionId: Long) = repository.getEndsWithShotsForSession(sessionId)
     fun getSessionByIdFlow(sessionId: Long) = repository.getSessionByIdFlow(sessionId)
     suspend fun getSessionById(sessionId: Long) = repository.getSessionById(sessionId)
-    
-    fun deleteSession(sessionId: Long) {
-        viewModelScope.launch {
-            repository.deleteSession(sessionId)
-        }
-    }
+    fun deleteSession(sessionId: Long) { viewModelScope.launch { repository.deleteSession(sessionId) } }
 }

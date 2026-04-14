@@ -13,6 +13,7 @@ class ArcheryRepository(private val archeryDao: ArcheryDao) {
 
     fun getAllSessionsForUser(userId: Long): Flow<List<ArcherySession>> = archeryDao.getAllSessionsForUser(userId)
     fun getAllEndsWithMetadataForUser(userId: Long) = archeryDao.getAllEndsWithMetadataForUser(userId)
+    fun getAllShotsWithMetadataForUser(userId: Long) = archeryDao.getAllShotsWithMetadataForUser(userId)
     
     suspend fun insertUser(user: User): Long = archeryDao.insertUser(user)
     suspend fun getUserByUsername(username: String): User? = archeryDao.getUserByUsername(username)
