@@ -273,6 +273,15 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun finishSession() {
+        val sessionId = _currentSessionId.value
+        val isEmpty = currentSessionEndsWithShots.value.all { it.shots.isEmpty() }
+        
+        if (sessionId != -1L && isEmpty) {
+            viewModelScope.launch {
+                repository.deleteSession(sessionId)
+            }
+        }
+
         _isSessionActive.value = false
         _currentSessionId.value = -1L
         _currentEndId.value = -1L
