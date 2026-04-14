@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.archerylog.ui.ArcheryViewModel
 import com.example.archerylog.ui.utils.L10n
 import kotlin.math.sqrt
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +49,9 @@ fun AddSessionScreen(
     val currentEndNumber by viewModel.currentEndNumber.collectAsState()
     val showDialog by viewModel.showEndCompletionDialog.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    
     // Local state for selectors
     var sessionTitle by remember { mutableStateOf("") }
     var venue by remember { mutableStateOf("") }
@@ -101,7 +105,13 @@ fun AddSessionScreen(
                 }
             },
             confirmButton = {
-                Button(onClick = { viewModel.confirmEndAndContinue() }) {
+                Button(onClick = { 
+                    if (currentEndNumber >= 6) {
+                        viewModel.finishSession()
+                    } else {
+                        viewModel.confirmEndAndContinue()
+                    }
+                }) {
                     Text(if (currentEndNumber >= 6) l10n.finish else l10n.start)
                 }
             }
@@ -109,6 +119,7 @@ fun AddSessionScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(l10n.newSession) },
@@ -425,7 +436,6 @@ fun AddSessionScreen(
                         indication = null
                     ) {
                         // Intentionally empty to intercept clicks within the recording area
-                        // This prevents the root Column's minimizeSessionUI from firing
                     },
                 tonalElevation = if (isSessionActive) 4.dp else 0.dp,
                 color = if (isSessionActive) Color(0xFF424242) else Color.Transparent,
@@ -523,7 +533,15 @@ fun AddSessionScreen(
                                 }
 
                                 Button(
-                                    onClick = { viewModel.moveToNextEnd() },
+                                    onClick = { 
+                                        if (currentEndNumber >= 6) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(l10n.lastEndNotice)
+                                            }
+                                        } else {
+                                            viewModel.moveToNextEnd()
+                                        }
+                                    },
                                     modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFF4CAF50),
@@ -543,7 +561,6 @@ fun AddSessionScreen(
                                             viewModel.moveToNextEnd()
                                         }
                                         viewModel.finishSession()
-                                        onBack() 
                                     },
                                     modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(

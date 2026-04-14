@@ -261,6 +261,11 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         val sessionId = _currentSessionId.value
         if (sessionId == -1L) return
         
+        if (_currentEndNumber.value >= 6) {
+            finishSession()
+            return
+        }
+
         viewModelScope.launch {
             _showEndCompletionDialog.value = false
             startNewEnd(sessionId, _currentEndNumber.value + 1)

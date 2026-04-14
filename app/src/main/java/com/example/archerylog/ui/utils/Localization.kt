@@ -458,6 +458,12 @@ class L10n(val language: AppLanguage) {
         AppLanguage.CHINESE -> "查看已保存的建议"
     }
 
+    val lastEndNotice = when(language) {
+        AppLanguage.ENGLISH -> "This is the last end. Please press [Finish] to end the session."
+        AppLanguage.JAPANESE -> "これが最後のエンドです。終了したら「記録完了」をクリックしてください。"
+        AppLanguage.CHINESE -> "这已经是最后一组，打完本组后请点击“记录完成”以关闭。"
+    }
+
     val saveToFavorites = when(language) {
         AppLanguage.ENGLISH -> "Save to Favorites"
         AppLanguage.JAPANESE -> "お気に入りに保存"
