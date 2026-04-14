@@ -237,8 +237,12 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             val shots = currentEndShots.value
             if (shots.isEmpty()) {
-                // If it's the start of an end, maybe allow abandoning if it's End 1?
-                if (_currentEndNumber.value == 1) abandonSession()
+                // If it's the start of an end, allow abandonment or simple finish
+                if (_currentEndNumber.value == 1) {
+                    abandonSession()
+                } else {
+                    finishSession()
+                }
                 return@launch
             }
             
@@ -335,6 +339,11 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         if (id != -1L) viewModelScope.launch { repository.updatePassword(id, newHash) }
     }
 
+    fun updatePassword(userId: Long, newHash: String) {
+        // Redundant or for admin tools
+        viewModelScope.launch { repository.updatePassword(userId, newHash) }
+    }
+
     fun updateEmail(email: String) {
         val id = _currentUserId.value
         if (id != -1L) viewModelScope.launch { repository.updateEmail(id, email) }
@@ -357,4 +366,3 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 }
-
