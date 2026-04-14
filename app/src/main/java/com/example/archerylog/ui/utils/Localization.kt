@@ -31,9 +31,9 @@ class L10n(val language: AppLanguage) {
 
     // Dashboard / Statistics
     val dashboardTitle = when(language) {
-        AppLanguage.ENGLISH -> "Dashboard"
-        AppLanguage.JAPANESE -> "ダッシュボード"
-        AppLanguage.CHINESE -> "仪表盘"
+        AppLanguage.ENGLISH -> "Data Analysis"
+        AppLanguage.JAPANESE -> "データ分析"
+        AppLanguage.CHINESE -> "数据分析"
     }
     val timeRange = when(language) {
         AppLanguage.ENGLISH -> "Time Range"
@@ -165,9 +165,9 @@ class L10n(val language: AppLanguage) {
     
     // AI Consultant
     val aiConsultant = when(language) {
-        AppLanguage.ENGLISH -> "Gemini Coach"
-        AppLanguage.JAPANESE -> "Gemini コーチ"
-        AppLanguage.CHINESE -> "Gemini 教练"
+        AppLanguage.ENGLISH -> "AI Coach"
+        AppLanguage.JAPANESE -> "AI コーチ"
+        AppLanguage.CHINESE -> "AI 教练"
     }
     val askAiPlaceholder = when(language) {
         AppLanguage.ENGLISH -> "Ask about archery tech, posture..."
@@ -447,13 +447,13 @@ class L10n(val language: AppLanguage) {
     }
 
     val myFavorites = when(language) {
-        AppLanguage.ENGLISH -> "AI Favorites"
-        AppLanguage.JAPANESE -> "AI 收藏"
-        AppLanguage.CHINESE -> "我的 AI 收藏"
+        AppLanguage.ENGLISH -> "Favorites"
+        AppLanguage.JAPANESE -> "收藏"
+        AppLanguage.CHINESE -> "收藏"
     }
 
     val viewSavedAdvice = when(language) {
-        AppLanguage.ENGLISH -> "View Saved AI Advice"
+        AppLanguage.ENGLISH -> "View Saved Advice"
         AppLanguage.JAPANESE -> "保存されたアドバイスを表示"
         AppLanguage.CHINESE -> "查看已保存的建议"
     }
