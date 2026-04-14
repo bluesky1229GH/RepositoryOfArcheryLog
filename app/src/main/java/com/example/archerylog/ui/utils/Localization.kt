@@ -96,9 +96,9 @@ class L10n(val language: AppLanguage) {
         AppLanguage.CHINESE -> "没有符合条件的数据"
     }
     val trendTitle = when(language) {
-        AppLanguage.ENGLISH -> "Mean Score per End"
-        AppLanguage.JAPANESE -> "エンド得点推移"
-        AppLanguage.CHINESE -> "每组平均得分趋势"
+        AppLanguage.ENGLISH -> "Avg Score per Arrow"
+        AppLanguage.JAPANESE -> "平均スコア推移（1射）"
+        AppLanguage.CHINESE -> "单箭均分趋势"
     }
     val zoom = when(language) {
         AppLanguage.ENGLISH -> "Zoom"
@@ -122,7 +122,6 @@ class L10n(val language: AppLanguage) {
     }
     val notes = when(language) {
         AppLanguage.ENGLISH -> "• Clicking outside the expanded target will cancel current record.\n• Ensure to tap 'Finish' after 6 ends to save."
-        AppLanguage.JAPANESE -> "• 拡大されたターゲットの外側をタップすると、現在の記録がキャンセルされます。\n• 6エンド終了後、必ず「記録完了」をタップして保存してください。"
         AppLanguage.CHINESE -> "• 展开靶纸后，点击靶纸周围区域将放弃当前记录。\n• 完成6轮练习后，务必点击「记录完成」以保存数据。"
     }
     val close = when(language) {
@@ -382,7 +381,6 @@ class L10n(val language: AppLanguage) {
     }
     val signupButton = when(language) {
         AppLanguage.ENGLISH -> "Sign Up"
-        AppLanguage.JAPANESE -> "登録"
         AppLanguage.CHINESE -> "注册"
     }
     val noAccount = when(language) {
@@ -414,7 +412,6 @@ class L10n(val language: AppLanguage) {
     }
     val totalScore = when(language) {
         AppLanguage.ENGLISH -> "Total Score"
-        AppLanguage.JAPANESE -> "合計"
         AppLanguage.CHINESE -> "总分"
     }
     val nextEnd = when(language) {

@@ -352,13 +352,13 @@ fun EndTrendChart(
                 }
 
                 // Draw Background Grid
-                val gridLines = 6
+                val gridLines = 5
                 for (i in 0..gridLines) {
-                    val score = i * 10
-                    val y = height - (score.toFloat() / 60f * height)
+                    val score = i * 2 // 0, 2, 4, 6, 8, 10
+                    val y = height - (score.toFloat() / 10f * height)
                     drawLine(color = gridColor, start = Offset(0f, y), end = Offset(width, y), strokeWidth = 1.dp.toPx())
                     
-                    // Y-AXIS NUMBERS - moved further left
+                    // Y-AXIS NUMBERS
                     drawContext.canvas.nativeCanvas.drawText(
                         score.toString(), -15.dp.toPx(), y + 4.dp.toPx(),
                         android.graphics.Paint().apply {
@@ -369,12 +369,15 @@ fun EndTrendChart(
                     )
                 }
 
+                chartColor // Dummy use
                 clipRect(0f, 0f, width, height) {
-                    val points = ends.map { end ->
-                        val start = startTime(timeRange, ends)
-                        val dur = duration(timeRange, ends)
-                        val px = ((end.timestamp - start).toFloat() / dur.toFloat()) * width * zoomScale + scrollOffset
-                        val py = height - (end.endTotalScore.toFloat() / 60f * height)
+                    val points = ends.mapIndexed { index, end ->
+                        val px = if (ends.size > 1) {
+                            (index.toFloat() / (ends.size - 1).toFloat()) * width * zoomScale + scrollOffset
+                        } else {
+                            width / 2f
+                        }
+                        val py = height - ((end.endTotalScore.toFloat() / 6f) / 10f * height)
                         Offset(px, py)
                     }
 
@@ -406,20 +409,19 @@ fun EndTrendChart(
                     }
                 }
 
-                // X-AXIS LABELS - moved much further down
+                // X-AXIS LABELS - Based on sample indices
                 val sdf = java.text.SimpleDateFormat(if(timeRange == TimeRangeFilter.DAY) "HH:mm" else "MM/dd")
-                val labelCount = (3 * zoomScale).toInt().coerceAtMost(10)
-                val startT = startTime(timeRange, ends)
-                val dur = duration(timeRange, ends)
-                for (i in 0..labelCount) {
-                    val ratio = i.toFloat() / labelCount
-                    val labelTime = startT + (ratio * dur).toLong()
-                    val labelX = ratio * width * zoomScale + scrollOffset
-                    if (labelX in -50f..width + 50f) {
-                        drawContext.canvas.nativeCanvas.drawText(
-                            sdf.format(java.util.Date(labelTime)), labelX, height + 35.dp.toPx(), // Increased from 25 to 35
-                            android.graphics.Paint().apply { color = textColor.toArgb(); textSize = 11.sp.toPx(); textAlign = android.graphics.Paint.Align.CENTER }
-                        )
+                val total = ends.size
+                if (total > 0) {
+                    val step = (total / (3 * zoomScale).toInt()).coerceAtLeast(1)
+                    for (i in 0 until total step step) {
+                        val labelX = (i.toFloat() / (total - 1).coerceAtLeast(1).toFloat()) * width * zoomScale + scrollOffset
+                        if (labelX in -50f..width + 50f) {
+                            drawContext.canvas.nativeCanvas.drawText(
+                                sdf.format(java.util.Date(ends[i].timestamp)), labelX, height + 35.dp.toPx(),
+                                android.graphics.Paint().apply { color = textColor.toArgb(); textSize = 11.sp.toPx(); textAlign = android.graphics.Paint.Align.CENTER }
+                            )
+                        }
                     }
                 }
             }
