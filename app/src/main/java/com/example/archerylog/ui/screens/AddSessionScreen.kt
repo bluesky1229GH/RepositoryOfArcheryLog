@@ -123,11 +123,6 @@ fun AddSessionScreen(
         topBar = {
             TopAppBar(
                 title = { Text(l10n.newSession) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
                 actions = {
                     IconButton(onClick = { showInstructions = true }) {
                         Icon(Icons.Default.Info, contentDescription = "Instructions", tint = MaterialTheme.colorScheme.onSurface)
