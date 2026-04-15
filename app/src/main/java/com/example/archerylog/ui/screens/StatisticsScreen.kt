@@ -370,9 +370,11 @@ fun EndTrendChart(
                 }
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val width = size.width
+                val leftPadding = 20.dp.toPx()
+                val rightPadding = 4.dp.toPx()
+                val chartWidth = size.width - leftPadding - rightPadding
                 val height = size.height
-                val maxScroll = (zoomScale - 1f) * width
+                val maxScroll = (zoomScale - 1f) * chartWidth
                 val safeOffset = scrollOffset.coerceIn(-maxScroll, 0f)
                 if (scrollOffset != safeOffset) scrollOffset = safeOffset
 
@@ -380,16 +382,16 @@ fun EndTrendChart(
                 for (i in 0..gridLines) {
                     val score = i * 2
                     val y = height - (score.toFloat() / 10f * height)
-                    drawLine(color = gridColor, start = Offset(0f, y), end = Offset(width, y), strokeWidth = 1.dp.toPx())
+                    drawLine(color = gridColor, start = Offset(leftPadding, y), end = Offset(size.width - rightPadding, y), strokeWidth = 1.dp.toPx())
                     drawContext.canvas.nativeCanvas.drawText(
-                        score.toString(), -12.dp.toPx(), y + 4.dp.toPx(),
+                        score.toString(), leftPadding - 6.dp.toPx(), y + 4.dp.toPx(),
                         android.graphics.Paint().apply { color = textColor.toArgb(); textSize = 10.sp.toPx(); textAlign = android.graphics.Paint.Align.RIGHT }
                     )
                 }
 
-                clipRect(0f, 0f, width, height) {
+                clipRect(leftPadding, 0f, size.width - rightPadding, height) {
                     val points = ends.mapIndexed { index, end ->
-                        val px = if (ends.size > 1) (index.toFloat() / (ends.size - 1).toFloat()) * width * zoomScale + scrollOffset else width/2f
+                        val px = if (ends.size > 1) leftPadding + (index.toFloat() / (ends.size - 1).toFloat()) * chartWidth * zoomScale + scrollOffset else leftPadding + chartWidth/2f
                         val py = height - ((end.endTotalScore.toFloat() / 6f) / 10f * height)
                         Offset(px, py)
                     }
@@ -406,7 +408,7 @@ fun EndTrendChart(
                         val fillPath = Path().apply { addPath(path); lineTo(points.last().x, height); lineTo(points.first().x, height); close() }
                         drawPath(fillPath, Brush.verticalGradient(listOf(chartColor.copy(0.2f), Color.Transparent)))
                     }
-                    points.forEach { p -> if (p.x in 0f..width) drawCircle(chartColor, 3.dp.toPx(), p) }
+                    points.forEach { p -> if (p.x in leftPadding..(size.width - rightPadding)) drawCircle(chartColor, 3.dp.toPx(), p) }
                 }
 
                 val sdf = java.text.SimpleDateFormat("MM/dd")
@@ -414,8 +416,8 @@ fun EndTrendChart(
                 if (total > 0) {
                     val step = (total / (3 * zoomScale).toInt()).coerceAtLeast(1)
                     for (i in 0 until total step step) {
-                        val lx = (i.toFloat() / (total - 1).coerceAtLeast(1).toFloat()) * width * zoomScale + scrollOffset
-                        if (lx in -50f..width + 50f) {
+                        val lx = leftPadding + (i.toFloat() / (total - 1).coerceAtLeast(1).toFloat()) * chartWidth * zoomScale + scrollOffset
+                        if (lx in -50f..size.width + 50f) {
                             drawContext.canvas.nativeCanvas.drawText(
                                 sdf.format(java.util.Date(ends[i].timestamp)), lx, height + 24.dp.toPx(),
                                 android.graphics.Paint().apply { color = textColor.toArgb(); textSize = 10.sp.toPx(); textAlign = android.graphics.Paint.Align.CENTER }
