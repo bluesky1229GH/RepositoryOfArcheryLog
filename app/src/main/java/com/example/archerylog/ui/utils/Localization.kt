@@ -212,8 +212,8 @@ class L10n(val language: AppLanguage) {
         AppLanguage.CHINESE -> "提问"
     }
     val cancel = when(language) {
-        AppLanguage.ENGLISH -> "Undo"
-        AppLanguage.JAPANESE -> "取消"
+        AppLanguage.ENGLISH -> "Cancel"
+        AppLanguage.JAPANESE -> "キャンセル"
         AppLanguage.CHINESE -> "取消"
     }
     val date = when(language) {
