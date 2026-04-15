@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.archerylog.ui.ArcheryViewModel
 import com.example.archerylog.data.LocationType
 import java.text.SimpleDateFormat
@@ -119,8 +120,20 @@ fun RecordsScreen(
                         modifier = Modifier.fillMaxWidth().clickable { onSessionClick(session.id) }
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
+                            if (session.title.isNotBlank()) {
+                                Text(text = session.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                if (session.venue.isNotBlank()) {
+                                    Text(text = "📍 ${session.venue}", fontSize = 12.sp, color = Color.Gray)
+                                }
+                                Text(text = "🌤 ${session.weather}", fontSize = 12.sp, color = Color.Gray)
+                                Text(text = "💨 ${session.wind}", fontSize = 12.sp, color = Color.Gray)
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
                             val dateString = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(session.timestamp))
-                            Text(text = "${l10n.date}: $dateString", style = MaterialTheme.typography.titleMedium)
+                            Text(text = "${l10n.date}: $dateString", style = MaterialTheme.typography.bodyMedium)
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 val locLabel = if (session.locationType == LocationType.OUTDOOR) l10n.outdoor else l10n.indoor

@@ -32,6 +32,8 @@ fun SessionDetailsScreen(
     val grandTotal = endsWithShots.sumOf { it.end.endTotalScore }
     var selectedEndNumber by remember { mutableStateOf<Int?>(null) }
     
+    val session by viewModel.getSessionByIdFlow(sessionId).collectAsState(initial = null)
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -62,6 +64,36 @@ fun SessionDetailsScreen(
             contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            session?.let { s ->
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            if (s.title.isNotBlank()) {
+                                Text(s.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                            val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(s.timestamp))
+                            Text("📅 $dateStr", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            val locLabel = if (s.locationType == com.example.archerylog.data.LocationType.OUTDOOR) l10n.outdoor else l10n.indoor
+                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                Text("🎯 ${s.distance}m - $locLabel", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                if (s.venue.isNotBlank()) {
+                                    Text("📍 ${s.venue}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Text("🌤 ${s.weather}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("💨 ${s.wind}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
             item {
                 val displayEnds = if (selectedEndNumber != null) {
                     endsWithShots.filter { it.end.endNumber == selectedEndNumber }
