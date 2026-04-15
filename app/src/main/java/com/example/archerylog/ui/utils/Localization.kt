@@ -144,7 +144,7 @@ class L10n(val language: AppLanguage) {
     // New Analysis Strings
     val ringDistribution = when(language) {
         AppLanguage.ENGLISH -> "Ring Distribution"
-        AppLanguage.JAPANESE -> "环值分布"
+        AppLanguage.JAPANESE -> "グルーピング"
         AppLanguage.CHINESE -> "环值稳定度分布"
     }
     val goldZone = when(language) {
@@ -480,7 +480,7 @@ class L10n(val language: AppLanguage) {
 
     val myFavorites = when(language) {
         AppLanguage.ENGLISH -> "Favorites"
-        AppLanguage.JAPANESE -> "收藏"
+        AppLanguage.JAPANESE -> "いいね"
         AppLanguage.CHINESE -> "收藏"
     }
 
@@ -498,7 +498,7 @@ class L10n(val language: AppLanguage) {
 
     val saveToFavorites = when(language) {
         AppLanguage.ENGLISH -> "Save to Favorites"
-        AppLanguage.JAPANESE -> "お気に入りに保存"
+        AppLanguage.JAPANESE -> "いいね"
         AppLanguage.CHINESE -> "收藏此建议"
     }
 

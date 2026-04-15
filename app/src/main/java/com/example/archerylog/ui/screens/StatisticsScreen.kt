@@ -56,9 +56,18 @@ fun StatisticsScreen(
     var aiQuestion by remember { mutableStateOf("") }
     val aiResponse by viewModel.aiResponse.collectAsState()
     val isAiLoading by viewModel.isAiLoading.collectAsState()
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.clearAiResponse()
+        }
+    }
     
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    var showFavorites by remember { mutableStateOf(false) }
+    val aiFavorites by viewModel.aiFavorites.collectAsState()
 
     var selectedLocation by remember { mutableStateOf<LocationType?>(null) }
     var selectedDistance by remember { mutableStateOf<Int?>(null) }
@@ -138,24 +147,62 @@ fun StatisticsScreen(
                 ) {
                     Column(modifier = Modifier.padding(24.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(l10n.aiConsultant, style = MaterialTheme.typography.titleLarge)
-                            IconButton(onClick = { showAiChat = false }) { Icon(Icons.Default.Close, null) }
+                            Text(l10n.aiConsultant, style = MaterialTheme.typography.titleLarge, color = Color(0xFF4CAF50))
+                            IconButton(onClick = { showAiChat = false; aiQuestion = ""; viewModel.clearAiResponse() }) { Icon(Icons.Default.Close, null) }
                         }
                         OutlinedTextField(
                             value = aiQuestion,
                             onValueChange = { aiQuestion = it },
                             modifier = Modifier.fillMaxWidth(),
                             placeholder = { Text(l10n.askAiPlaceholder) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF4CAF50),
+                                unfocusedBorderColor = Color(0xFF4CAF50).copy(alpha = 0.5f),
+                                cursorColor = Color(0xFF4CAF50)
+                            ),
                             trailingIcon = {
                                 IconButton(onClick = { viewModel.askGemini(aiQuestion) }) {
-                                    if (isAiLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                                    else Icon(Icons.Default.AutoAwesome, null)
+                                    if (isAiLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF4CAF50))
+                                    else Icon(Icons.Default.AutoAwesome, null, tint = Color(0xFF4CAF50))
                                 }
                             }
                         )
                         if (aiResponse != null) {
-                            Box(modifier = Modifier.heightIn(max = 240.dp).padding(top = 16.dp).verticalScroll(rememberScrollState())) {
-                                Text(aiResponse!!, style = MaterialTheme.typography.bodyMedium)
+                            val alreadySaved = aiFavorites.any { it.question == aiQuestion }
+                            var isSaved by remember { mutableStateOf(alreadySaved) }
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+                            ) {
+                                Column {
+                                    Box(modifier = Modifier.heightIn(max = 280.dp).padding(16.dp).verticalScroll(rememberScrollState())) {
+                                        Text(aiResponse!!, style = MaterialTheme.typography.bodyMedium)
+                                    }
+                                    Divider(color = Color.Gray.copy(alpha = 0.3f), thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        TextButton(
+                                            onClick = {
+                                                if (!isSaved) {
+                                                    viewModel.saveAiFavorite(aiQuestion, aiResponse!!)
+                                                    isSaved = true
+                                                }
+                                            }
+                                        ) {
+                                            Icon(
+                                                if (isSaved) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                                null,
+                                                modifier = Modifier.size(16.dp),
+                                                tint = Color(0xFF4CAF50)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(l10n.saveToFavorites, fontSize = 12.sp, color = Color(0xFF4CAF50))
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
