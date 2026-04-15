@@ -233,7 +233,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             val shots = currentEndShots.value
             if (shots.isEmpty()) {
-                if (_currentEndNumber.value == 1) abandonSession() else finishSession()
+                abandonSession()
                 return@launch
             }
             
@@ -261,11 +261,17 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
 
     fun finishSession() {
         val sessionId = _currentSessionId.value
-        val isEmpty = currentSessionEndsWithShots.value.all { it.shots.isEmpty() }
+        val ends = currentSessionEndsWithShots.value
+        val totalShots = ends.sumOf { it.shots.size }
+        val totalScore = ends.sumOf { it.end.endTotalScore }
         
-        if (sessionId != -1L && isEmpty) {
+        if (sessionId != -1L && (totalShots == 0 || totalScore == 0)) {
             viewModelScope.launch { repository.deleteSession(sessionId) }
         }
+
+        // Reset session metadata
+        currentSessionTitle = ""
+        currentVenue = ""
 
         _isSessionActive.value = false
         _currentSessionId.value = -1L
@@ -278,8 +284,20 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         if (sessionId != -1L) {
             viewModelScope.launch {
                 repository.deleteSession(sessionId)
-                finishSession()
+                currentSessionTitle = ""
+                currentVenue = ""
+                _isSessionActive.value = false
+                _currentSessionId.value = -1L
+                _currentEndId.value = -1L
+                _showEndCompletionDialog.value = false
             }
+        } else {
+            currentSessionTitle = ""
+            currentVenue = ""
+            _isSessionActive.value = false
+            _currentSessionId.value = -1L
+            _currentEndId.value = -1L
+            _showEndCompletionDialog.value = false
         }
     }
 

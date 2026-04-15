@@ -83,7 +83,7 @@ fun AddSessionScreen(
         else -> "🍃"
     }
 
-    // Sync local state to viewModel
+    // Sync local state to viewModel and handle reset
     LaunchedEffect(sessionTitle, venue, distanceText, location, weatherStr, windStr) {
         viewModel.currentSessionTitle = sessionTitle
         viewModel.currentVenue = venue
@@ -91,6 +91,14 @@ fun AddSessionScreen(
         viewModel.currentLocationType = location
         viewModel.currentWeather = weatherStr
         viewModel.currentWind = windStr
+    }
+
+    // Reset local inputs when session ends
+    LaunchedEffect(isSessionActive) {
+        if (!isSessionActive) {
+            sessionTitle = ""
+            venue = ""
+        }
     }
 
     if (showDialog) {
