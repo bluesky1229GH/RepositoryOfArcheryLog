@@ -507,4 +507,52 @@ class L10n(val language: AppLanguage) {
         AppLanguage.JAPANESE -> "保存しました！"
         AppLanguage.CHINESE -> "已收藏！"
     }
+
+    // Date Picker
+    val pickerCancel = when(language) {
+        AppLanguage.ENGLISH -> "Cancel"
+        AppLanguage.JAPANESE -> "キャンセル"
+        AppLanguage.CHINESE -> "取消"
+    }
+    val pickerDone = when(language) {
+        AppLanguage.ENGLISH -> "Done"
+        AppLanguage.JAPANESE -> "完了"
+        AppLanguage.CHINESE -> "确定"
+    }
+    val pickerYesterday = when(language) {
+        AppLanguage.ENGLISH -> "Yesterday"
+        AppLanguage.JAPANESE -> "昨日"
+        AppLanguage.CHINESE -> "昨天"
+    }
+    val pickerToday = when(language) {
+        AppLanguage.ENGLISH -> "Today"
+        AppLanguage.JAPANESE -> "今日"
+        AppLanguage.CHINESE -> "今天"
+    }
+    val pickerYearSuffix = when(language) {
+        AppLanguage.ENGLISH -> ""
+        AppLanguage.JAPANESE -> "年"
+        AppLanguage.CHINESE -> "年"
+    }
+    val pickerMonthSuffix = when(language) {
+        AppLanguage.ENGLISH -> ""
+        AppLanguage.JAPANESE -> "月"
+        AppLanguage.CHINESE -> "月"
+    }
+    val pickerDaySuffix = when(language) {
+        AppLanguage.ENGLISH -> ""
+        AppLanguage.JAPANESE -> "日"
+        AppLanguage.CHINESE -> "日"
+    }
+    // For English, we use month names instead of numbers
+    val pickerMonthNames = when(language) {
+        AppLanguage.ENGLISH -> listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+        AppLanguage.JAPANESE -> emptyList()
+        AppLanguage.CHINESE -> emptyList()
+    }
+    val pickerLocale = when(language) {
+        AppLanguage.ENGLISH -> java.util.Locale.ENGLISH
+        AppLanguage.JAPANESE -> java.util.Locale.JAPANESE
+        AppLanguage.CHINESE -> java.util.Locale.CHINESE
+    }
 }

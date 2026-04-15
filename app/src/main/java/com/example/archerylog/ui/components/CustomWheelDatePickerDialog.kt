@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.archerylog.ui.utils.L10n
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -23,6 +24,7 @@ import java.util.*
 @Composable
 fun CustomWheelDatePickerDialog(
     initialDateMillis: Long,
+    l10n: L10n,
     onDismiss: () -> Unit,
     onConfirmDate: (Long) -> Unit
 ) {
@@ -64,7 +66,8 @@ fun CustomWheelDatePickerDialog(
         selectedDay = days.getOrElse(dayState.currentPage) { days.first() }
     }
 
-    val dayOfWeekFormatter = SimpleDateFormat("EEEE", Locale.getDefault())
+    // Use the app's language locale for weekday display
+    val dayOfWeekFormatter = SimpleDateFormat("EEEE", l10n.pickerLocale)
     val selectedCal = Calendar.getInstance().apply {
         set(selectedYear, selectedMonth - 1, selectedDay)
     }
@@ -87,11 +90,11 @@ fun CustomWheelDatePickerDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("キャンセル", color = Color(0xFF4CAF50), fontSize = 16.sp)
+                        Text(l10n.pickerCancel, color = Color(0xFF4CAF50), fontSize = 16.sp)
                     }
                     Text(dayOfWeekStr, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     TextButton(onClick = { onConfirmDate(selectedCal.timeInMillis) }) {
-                        Text("完了", color = Color(0xFF4CAF50), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(l10n.pickerDone, color = Color(0xFF4CAF50), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -109,7 +112,7 @@ fun CustomWheelDatePickerDialog(
                         },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF4CAF50))
                     ) {
-                        Text("昨日")
+                        Text(l10n.pickerYesterday)
                     }
                     OutlinedButton(
                         onClick = {
@@ -118,7 +121,7 @@ fun CustomWheelDatePickerDialog(
                         },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF4CAF50))
                     ) {
-                        Text("今日")
+                        Text(l10n.pickerToday)
                     }
                 }
 
@@ -148,7 +151,7 @@ fun CustomWheelDatePickerDialog(
                             contentPadding = PaddingValues(vertical = 55.dp),
                             modifier = Modifier.height(150.dp).weight(1f)
                         ) { page ->
-                            val text = "${years[page]}年"
+                            val text = "${years[page]}${l10n.pickerYearSuffix}"
                             WheelText(text, isSelected = page == yearState.currentPage)
                         }
 
@@ -158,7 +161,11 @@ fun CustomWheelDatePickerDialog(
                             contentPadding = PaddingValues(vertical = 55.dp),
                             modifier = Modifier.height(150.dp).weight(1f)
                         ) { page ->
-                            val text = "${months[page]}月"
+                            val text = if (l10n.pickerMonthNames.isNotEmpty()) {
+                                l10n.pickerMonthNames[months[page] - 1]
+                            } else {
+                                "${months[page]}${l10n.pickerMonthSuffix}"
+                            }
                             WheelText(text, isSelected = page == monthState.currentPage)
                         }
 
@@ -168,7 +175,7 @@ fun CustomWheelDatePickerDialog(
                             contentPadding = PaddingValues(vertical = 55.dp),
                             modifier = Modifier.height(150.dp).weight(1f)
                         ) { page ->
-                            val text = "${days[page]}日"
+                            val text = "${days[page]}${l10n.pickerDaySuffix}"
                             WheelText(text, isSelected = page == dayState.currentPage)
                         }
                     }

@@ -142,6 +142,7 @@ fun RecordsScreen(
     if (pickingStart) {
         CustomWheelDatePickerDialog(
             initialDateMillis = startDateMillis ?: System.currentTimeMillis(),
+            l10n = l10n,
             onDismiss = { pickingStart = false },
             onConfirmDate = { millis -> 
                 startDateMillis = millis
@@ -153,6 +154,7 @@ fun RecordsScreen(
     if (pickingEnd) {
         CustomWheelDatePickerDialog(
             initialDateMillis = endDateMillis ?: System.currentTimeMillis(),
+            l10n = l10n,
             onDismiss = { pickingEnd = false },
             onConfirmDate = { millis -> 
                 endDateMillis = millis
