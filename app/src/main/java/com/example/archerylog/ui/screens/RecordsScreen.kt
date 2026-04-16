@@ -35,14 +35,14 @@ import kotlin.math.roundToInt
 fun RecordsScreen(
     viewModel: ArcheryViewModel,
     onAddSessionClick: () -> Unit,
-    onSessionClick: (Long) -> Unit
+    onSessionClick: (String) -> Unit
 ) {
     val sessions by viewModel.allSessions.collectAsState(initial = emptyList())
     val currentUser by viewModel.currentUser.collectAsState()
     val currentLanguage by viewModel.currentLanguage.collectAsState()
     val l10n = L10n(currentLanguage)
     
-    var sessionToDelete by remember { mutableStateOf<Long?>(null) }
+    var sessionToDelete by remember { mutableStateOf<String?>(null) }
     
     var startDateMillis by remember { mutableStateOf<Long?>(null) }
     var endDateMillis by remember { mutableStateOf<Long?>(null) }
@@ -77,9 +77,9 @@ fun RecordsScreen(
             TopAppBar(
                 title = { Text(l10n.recordsTitle) },
                 actions = {
-                    if (currentUser != null) {
+                    currentUser?.let { user ->
                         ProfileAvatar(
-                            uri = currentUser!!.avatarUri,
+                            uri = user.avatarUri,
                             size = 36.dp,
                             modifier = Modifier.padding(end = 16.dp)
                         )
@@ -120,16 +120,16 @@ fun RecordsScreen(
                         modifier = Modifier.fillMaxWidth().clickable { onSessionClick(session.id) }
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            if (session.title.isNotBlank()) {
-                                Text(text = session.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            if (!session.title.isNullOrBlank()) {
+                                Text(text = session.title!!, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(4.dp))
                             }
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                if (session.venue.isNotBlank()) {
+                                if (!session.venue.isNullOrBlank()) {
                                     Text(text = "📍 ${session.venue}", fontSize = 12.sp, color = Color.Gray)
                                 }
-                                Text(text = "🌤 ${session.weather}", fontSize = 12.sp, color = Color.Gray)
-                                Text(text = "💨 ${session.wind}", fontSize = 12.sp, color = Color.Gray)
+                                Text(text = "🌤 ${session.weather ?: ""}", fontSize = 12.sp, color = Color.Gray)
+                                Text(text = "💨 ${session.wind ?: ""}", fontSize = 12.sp, color = Color.Gray)
                             }
                             Spacer(modifier = Modifier.height(6.dp))
                             val dateString = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(session.timestamp))

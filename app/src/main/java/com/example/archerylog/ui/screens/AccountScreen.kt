@@ -70,13 +70,14 @@ fun AccountScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (currentUser != null) {
+            val user = currentUser
+            if (user != null) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(32.dp))
-                    ProfileAvatar(uri = currentUser!!.avatarUri, size = 100.dp)
+                    ProfileAvatar(uri = user.avatarUri, size = 100.dp)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         TextButton(onClick = { cameraLauncher.launch(null) }) {
@@ -94,14 +95,14 @@ fun AccountScreen(
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(l10n.username, style = MaterialTheme.typography.labelMedium)
-                        Text(currentUser!!.username, style = MaterialTheme.typography.bodyLarge)
+                        Text(user.username, style = MaterialTheme.typography.bodyLarge)
                         
                         Divider(modifier = Modifier.padding(vertical = 8.dp))
                         
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(l10n.email, style = MaterialTheme.typography.labelMedium)
-                                Text(if (currentUser!!.email.isEmpty()) l10n.notSet else currentUser!!.email, style = MaterialTheme.typography.bodyLarge)
+                                Text(if (user.email.isNullOrEmpty()) l10n.notSet else user.email ?: "", style = MaterialTheme.typography.bodyLarge)
                             }
                             IconButton(onClick = { showEmailDialog = true }) {
                                 Icon(Icons.Default.Edit, contentDescription = "Edit Email")

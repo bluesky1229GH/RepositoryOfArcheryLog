@@ -16,13 +16,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import com.example.archerylog.ui.components.*
 import com.example.archerylog.ui.ArcheryViewModel
 import com.example.archerylog.ui.utils.L10n
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionDetailsScreen(
-    sessionId: Long,
+    sessionId: String,
     viewModel: ArcheryViewModel,
     onBack: () -> Unit
 ) {
@@ -71,8 +72,8 @@ fun SessionDetailsScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            if (s.title.isNotBlank()) {
-                                Text(s.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            if (!s.title.isNullOrBlank()) {
+                                Text(s.title!!, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
                             val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(s.timestamp))
@@ -84,11 +85,11 @@ fun SessionDetailsScreen(
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                if (s.venue.isNotBlank()) {
+                                if (!s.venue.isNullOrBlank()) {
                                     Text("📍 ${s.venue}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Text("🌤 ${s.weather}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("💨 ${s.wind}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("🌤 ${s.weather ?: ""}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("💨 ${s.wind ?: ""}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }

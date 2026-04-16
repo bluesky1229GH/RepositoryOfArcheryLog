@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Check
+import com.example.archerylog.ui.components.*
 import com.example.archerylog.ui.ArcheryViewModel
 import com.example.archerylog.ui.utils.L10n
 import kotlin.math.sqrt

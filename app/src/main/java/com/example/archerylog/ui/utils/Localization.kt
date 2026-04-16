@@ -461,8 +461,18 @@ class L10n(val language: AppLanguage) {
     }
     val undo = when(language) {
         AppLanguage.ENGLISH -> "Undo"
-        AppLanguage.JAPANESE -> "取消"
-        AppLanguage.CHINESE -> "取消"
+        AppLanguage.JAPANESE -> "取り消し"
+        AppLanguage.CHINESE -> "撤销"
+    }
+    val abandonSessionTitle = when(language) {
+        AppLanguage.ENGLISH -> "Abandon Session"
+        AppLanguage.JAPANESE -> "練習を破棄"
+        AppLanguage.CHINESE -> "放弃练习"
+    }
+    val abandonSessionConfirm = when(language) {
+        AppLanguage.ENGLISH -> "Are you sure you want to abandon this session? Current records will be deleted."
+        AppLanguage.JAPANESE -> "この練習を破棄してもよろしいですか？現在の記録は削除されます。"
+        AppLanguage.CHINESE -> "确定要放弃本次练习吗？当前记录将被删除且无法找回。"
     }
     val sessionDetailsTitle = when(language) {
         AppLanguage.ENGLISH -> "Session Details"
@@ -476,6 +486,12 @@ class L10n(val language: AppLanguage) {
             AppLanguage.JAPANESE -> if (isLast) "6エンドすべての記録が完了しました。練習を終了しますか？" else "${current}エンドの记录が完了しました。${current + 1}エンドに進みますか？"
             AppLanguage.CHINESE -> if (isLast) "6轮练习已全部记录完成。要结束并保存吗？" else "第${current}轮记录完成，要开始第${current + 1}轮吗？"
         }
+    }
+
+    val bufferMessage = when(language) {
+        AppLanguage.ENGLISH -> "End complete.\nTo modify, tap the BLACK 'Undo' button.\nTo proceed, tap the GREEN 'Next' button below."
+        AppLanguage.JAPANESE -> "エンド記録完了。\n修正するには黒の「取り消し」を、\n次へ進むには下の緑色「次へ」ボタンをタップしてください。"
+        AppLanguage.CHINESE -> "本组录入已完成。\n如需修改，请点击左下角黑色的“撤销”按钮；\n如需进入下一组，请点击下方的绿色“下一组”按钮。"
     }
 
     val myFavorites = when(language) {
@@ -506,6 +522,12 @@ class L10n(val language: AppLanguage) {
         AppLanguage.ENGLISH -> "Saved!"
         AppLanguage.JAPANESE -> "保存しました！"
         AppLanguage.CHINESE -> "已收藏！"
+    }
+
+    val syncingData = when(language) {
+        AppLanguage.ENGLISH -> "Syncing data from cloud..."
+        AppLanguage.JAPANESE -> "クラウドから同期中..."
+        AppLanguage.CHINESE -> "正在从云端同步历史记录..."
     }
 
     // Date Picker

@@ -55,6 +55,7 @@ import com.example.archerylog.ui.screens.AddSessionScreen
 import com.example.archerylog.ui.theme.ArcheryLogTheme
 import com.example.archerylog.ui.utils.L10n
 import com.example.archerylog.data.LocationType
+import androidx.activity.enableEdgeToEdge
 
 class MainActivity : ComponentActivity() {
     
@@ -62,6 +63,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         // Completely disable activity-level transitions
         @Suppress("DEPRECATION")
@@ -89,9 +91,10 @@ fun ArcheryApp(viewModel: ArcheryViewModel) {
     val l10n = L10n(currentLanguage)
 
     val bottomBarRoutes = listOf("dashboard", "records", "add_session", "account")
+    val isSyncing by viewModel.isSyncing.collectAsState()
 
-    val instantEnter = fadeIn(animationSpec = tween(0))
-    val instantExit = fadeOut(animationSpec = tween(0))
+    val instantEnter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(0))
+    val instantExit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(0))
 
     Scaffold(
         bottomBar = {
@@ -189,41 +192,51 @@ fun ArcheryApp(viewModel: ArcheryViewModel) {
             }
         }
     ) { paddingValues ->
-        NavHost(
-            navController = navController, 
-            startDestination = "splash",
-            modifier = Modifier.padding(paddingValues),
-            enterTransition = { instantEnter },
-            exitTransition = { instantExit },
-            popEnterTransition = { instantEnter },
-            popExitTransition = { instantExit }
-        ) {
-            composable("splash", enterTransition = { instantEnter }, exitTransition = { instantExit }) {
-                SplashScreen(onTimeout = {
-                    val dest = if (viewModel.isLoggedIn) "dashboard" else "login"
-                    navController.navigate(dest) { popUpTo("splash") { inclusive = true } }
-                })
+        Box(modifier = Modifier.fillMaxSize().padding(bottom = paddingValues.calculateBottomPadding())) {
+            NavHost(
+                navController = navController, 
+                startDestination = "splash",
+                modifier = Modifier.fillMaxSize(),
+                enterTransition = { instantEnter },
+                exitTransition = { instantExit },
+                popEnterTransition = { instantEnter },
+                popExitTransition = { instantExit }
+            ) {
+                composable("splash", enterTransition = { instantEnter }, exitTransition = { instantExit }) {
+                    SplashScreen(onTimeout = {
+                        val dest = if (viewModel.isLoggedIn) "dashboard" else "login"
+                        navController.navigate(dest) { popUpTo("splash") { inclusive = true } }
+                    })
+                }
+                composable("login", enterTransition = { instantEnter }, exitTransition = { instantExit }) {
+                    LoginScreen(viewModel = viewModel, onLoginSuccess = {
+                        navController.navigate("dashboard") { popUpTo("login") { inclusive = true } }
+                    })
+                }
+                composable("dashboard", enterTransition = { instantEnter }, exitTransition = { instantExit }) {
+                    StatisticsScreen(viewModel = viewModel)
+                }
+                composable("records", enterTransition = { instantEnter }, exitTransition = { instantExit }, popEnterTransition = { instantEnter }, popExitTransition = { instantExit }) {
+                    RecordsScreen(viewModel = viewModel, onAddSessionClick = { navController.navigate("add_session") }, onSessionClick = { id -> navController.navigate("session_details/$id") })
+                }
+                composable("add_session", enterTransition = { instantEnter }, exitTransition = { instantExit }, popEnterTransition = { instantEnter }, popExitTransition = { instantExit }) {
+                    AddSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onStartSession = { _, _ -> /* Unified screen handles this now */ })
+                }
+                composable("account", enterTransition = { instantEnter }, exitTransition = { instantExit }) {
+                    AccountScreen(viewModel = viewModel, onLogout = { navController.navigate("login") { popUpTo(navController.graph.id) { inclusive = true } } })
+                }
+                composable("session_details/{sessionId}", enterTransition = { instantEnter }, exitTransition = { instantExit }) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getString("sessionId")
+                    if (id != null) SessionDetailsScreen(viewModel = viewModel, sessionId = id, onBack = { navController.popBackStack() })
+                }
             }
-            composable("login", enterTransition = { instantEnter }, exitTransition = { instantExit }) {
-                LoginScreen(viewModel = viewModel, onLoginSuccess = {
-                    navController.navigate("dashboard") { popUpTo("login") { inclusive = true } }
-                })
-            }
-            composable("dashboard", enterTransition = { instantEnter }, exitTransition = { instantExit }) {
-                StatisticsScreen(viewModel = viewModel)
-            }
-            composable("records", enterTransition = { instantEnter }, exitTransition = { instantExit }, popEnterTransition = { instantEnter }, popExitTransition = { instantExit }) {
-                RecordsScreen(viewModel = viewModel, onAddSessionClick = { navController.navigate("add_session") }, onSessionClick = { id -> navController.navigate("session_details/$id") })
-            }
-            composable("add_session", enterTransition = { instantEnter }, exitTransition = { instantExit }, popEnterTransition = { instantEnter }, popExitTransition = { instantExit }) {
-                AddSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onStartSession = { _, _ -> /* Unified screen handles this now */ })
-            }
-            composable("account", enterTransition = { instantEnter }, exitTransition = { instantExit }) {
-                AccountScreen(viewModel = viewModel, onLogout = { navController.navigate("login") { popUpTo(navController.graph.id) { inclusive = true } } })
-            }
-            composable("session_details/{sessionId}", enterTransition = { instantEnter }, exitTransition = { instantExit }) { backStackEntry ->
-                val id = backStackEntry.arguments?.getString("sessionId")?.toLongOrNull()
-                if (id != null) SessionDetailsScreen(viewModel = viewModel, sessionId = id, onBack = { navController.popBackStack() })
+
+            if (isSyncing) {
+                androidx.compose.material3.LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth().height(2.dp).align(Alignment.TopCenter),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = Color.Transparent
+                )
             }
         }
     }

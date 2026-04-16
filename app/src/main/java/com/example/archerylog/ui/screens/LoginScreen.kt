@@ -24,7 +24,7 @@ fun LoginScreen(
     val l10n = L10n(currentLanguage)
     val scope = rememberCoroutineScope()
 
-    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isSignUp by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -46,9 +46,10 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text(l10n.username) },
+            value = email,
+            onValueChange = { email = it },
+            label = { Text(l10n.email) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth()
         )
         
@@ -76,16 +77,16 @@ fun LoginScreen(
         Button(
             onClick = {
                 scope.launch {
-                    val success = if (isSignUp) {
-                        viewModel.signup(username, password)
+                    val errorMsg = if (isSignUp) {
+                        viewModel.signup(email, password)
                     } else {
-                        viewModel.login(username, password)
+                        viewModel.login(email, password)
                     }
                     
-                    if (success) {
+                    if (errorMsg == null) {
                         onLoginSuccess()
                     } else {
-                        error = if (isSignUp) l10n.signupFailed else l10n.loginFailed
+                        error = errorMsg
                     }
                 }
             },

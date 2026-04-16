@@ -1,4 +1,4 @@
-package com.example.archerylog.ui.screens
+package com.example.archerylog.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -18,14 +18,15 @@ import com.example.archerylog.data.Shot
 fun TargetFace(
     ends: List<EndWithShots>,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onTap: ((x: Float, y: Float, normalizedArrowRadius: Float) -> Unit)? = null
 ) {
     Canvas(
         modifier = modifier
             .aspectRatio(1f)
             .fillMaxWidth()
-            .pointerInput(onTap) {
-                if (onTap != null) {
+            .pointerInput(onTap, enabled) {
+                if (onTap != null && enabled) {
                     detectTapGestures { offset ->
                         val radius = size.width / 2f
                         val center = Offset(size.width / 2f, size.height / 2f)
@@ -95,6 +96,22 @@ fun TargetFace(
                     )
                 }
             }
+        }
+        
+        // Draw locked overlay if disabled
+        if (!enabled) {
+            drawCircle(
+                color = Color.Black.copy(alpha = 0.3f),
+                radius = radius,
+                center = center
+            )
+            // Optional: Draw a subtle ring to highlight the lock
+            drawCircle(
+                color = Color.White.copy(alpha = 0.5f),
+                radius = radius * 0.95f,
+                center = center,
+                style = Stroke(width = 2.dp.toPx())
+            )
         }
     }
 }

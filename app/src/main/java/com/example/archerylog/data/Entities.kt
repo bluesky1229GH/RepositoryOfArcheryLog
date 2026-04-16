@@ -4,18 +4,27 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
+import java.util.UUID
 
-enum class LocationType { INDOOR, OUTDOOR }
+@Serializable
+enum class LocationType { 
+    @SerialName("INDOOR") INDOOR, 
+    @SerialName("OUTDOOR") OUTDOOR 
+}
 
+@Serializable
 @Entity(tableName = "users")
 data class User(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val username: String,
-    val passwordHash: String = "",
-    val email: String = "",
-    val avatarUri: String = ""
+    val email: String? = null,
+    @SerialName("password_hash") val passwordHash: String = "",
+    @SerialName("avatar_uri") val avatarUri: String? = null
 )
 
+@Serializable
 @Entity(
     tableName = "sessions",
     foreignKeys = [
@@ -29,19 +38,20 @@ data class User(
     indices = [Index("userId")]
 )
 data class ArcherySession(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val userId: Long,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    @SerialName("user_id") val userId: String,
     val timestamp: Long = System.currentTimeMillis(),
-    val locationType: LocationType,
+    @SerialName("location_type") val locationType: LocationType,
     val distance: Int,
-    val totalScore: Int = 0,
-    val totalShots: Int = 0,
-    val title: String = "",
-    val venue: String = "",
-    val weather: String = "Sunny",
-    val wind: String = "Low"
+    @SerialName("total_score") val totalScore: Int = 0,
+    @SerialName("total_shots") val totalShots: Int = 0,
+    val title: String? = null,
+    val venue: String? = null,
+    val weather: String? = null,
+    val wind: String? = null
 )
 
+@Serializable
 @Entity(
     tableName = "ends",
     foreignKeys = [
@@ -55,13 +65,14 @@ data class ArcherySession(
     indices = [Index("sessionId")]
 )
 data class SessionEnd(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val sessionId: Long,
-    val endNumber: Int,
-    val endTotalScore: Int = 0,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    @SerialName("session_id") val sessionId: String,
+    @SerialName("end_number") val endNumber: Int,
+    @SerialName("end_total_score") val endTotalScore: Int = 0,
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
 @Entity(
     tableName = "shots",
     foreignKeys = [
@@ -75,10 +86,10 @@ data class SessionEnd(
     indices = [Index("endId")]
 )
 data class Shot(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val endId: Long,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    @SerialName("end_id") val endId: String,
     val score: String,
-    val numericValue: Int,
+    @SerialName("numeric_value") val numericValue: Int,
     val x: Float? = null,
     val y: Float? = null
 )
@@ -93,8 +104,8 @@ data class EndWithShots(
 )
 
 data class EndWithMetadata(
-    val endId: Long,
-    val sessionId: Long,
+    val endId: String,
+    val sessionId: String,
     val endNumber: Int,
     val endTotalScore: Int,
     val timestamp: Long,
@@ -110,6 +121,7 @@ data class ShotWithMetadata(
     val distance: Int
 )
 
+@Serializable
 @Entity(
     tableName = "ai_favorites",
     foreignKeys = [
@@ -123,8 +135,8 @@ data class ShotWithMetadata(
     indices = [Index("userId")]
 )
 data class AiFavorite(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val userId: Long,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    @SerialName("user_id") val userId: String,
     val question: String,
     val answer: String,
     val timestamp: Long = System.currentTimeMillis()

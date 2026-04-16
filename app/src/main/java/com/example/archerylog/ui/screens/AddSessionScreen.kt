@@ -27,6 +27,9 @@ import androidx.compose.foundation.verticalScroll
 import com.example.archerylog.data.LocationType
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.archerylog.ui.ArcheryViewModel
+import com.example.archerylog.ui.components.TargetFace
+import com.example.archerylog.ui.components.getScoreBackgroundColor
+import com.example.archerylog.ui.components.getScoreTextColor
 import com.example.archerylog.ui.utils.L10n
 import kotlin.math.sqrt
 import kotlinx.coroutines.launch
@@ -48,6 +51,7 @@ fun AddSessionScreen(
     val currentEndId by viewModel.currentEndId.collectAsState()
     val currentEndNumber by viewModel.currentEndNumber.collectAsState()
     val showDialog by viewModel.showEndCompletionDialog.collectAsState()
+    val isCreatingSession by viewModel.isCreatingSession.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -64,7 +68,7 @@ fun AddSessionScreen(
     var expandedWeather by remember { mutableStateOf(false) }
     var expandedWind by remember { mutableStateOf(false) }
     var showInstructions by remember { mutableStateOf(false) }
-    
+    var showAbandonConfirm by remember { mutableStateOf(false) }
     val distanceOptions = listOf("8", "10", "18", "30", "50", "60", "70")
     val weatherOptions = listOf("Sunny", "Cloudy", "Rainy")
     val windOptions = listOf("Low", "Mid", "High")
@@ -103,24 +107,37 @@ fun AddSessionScreen(
 
     if (showDialog) {
         AlertDialog(
-            onDismissRequest = { viewModel.dismissEndDialog() },
+            onDismissRequest = { viewModel.confirmEndAndContinue() },
             properties = androidx.compose.ui.window.DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false),
-            title = { Text("${l10n.end} $currentEndNumber ${l10n.finish}") },
-            text = { Text(l10n.getEndCompleteMessage(currentEndNumber)) },
-            dismissButton = {
-                TextButton(onClick = { viewModel.dismissEndDialog() }) {
-                    Text(l10n.cancel)
+            title = { Text(l10n.addRecordTitle) },
+            text = { Text(l10n.bufferMessage) },
+            confirmButton = {
+                Button(onClick = { viewModel.confirmEndAndContinue() }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    if (showAbandonConfirm) {
+        AlertDialog(
+            onDismissRequest = { showAbandonConfirm = false },
+            title = { Text(l10n.abandonSessionTitle) },
+            text = { Text(l10n.abandonSessionConfirm) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showAbandonConfirm = false
+                        viewModel.abandonSession()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(l10n.delete)
                 }
             },
-            confirmButton = {
-                Button(onClick = { 
-                    if (currentEndNumber >= 6) {
-                        viewModel.finishSession()
-                    } else {
-                        viewModel.confirmEndAndContinue()
-                    }
-                }) {
-                    Text(if (currentEndNumber >= 6) l10n.finish else l10n.start)
+            dismissButton = {
+                TextButton(onClick = { showAbandonConfirm = false }) {
+                    Text(l10n.cancel)
                 }
             }
         )
@@ -191,14 +208,6 @@ fun AddSessionScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .clickable(
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    indication = null
-                ) {
-                    if (isSessionActive) {
-                        viewModel.abandonSession()
-                    }
-                }
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -456,21 +465,50 @@ fun AddSessionScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = "${l10n.end} $currentEndNumber",
                                 style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White
                             )
+                            Spacer(modifier = Modifier.weight(1f))
+                            
                             val totalScore = endsWithShots.sumOf { it.end.endTotalScore }
                             val totalShots = endsWithShots.sumOf { it.shots.size }
-                            Text(
-                                text = "${l10n.totalScore}: $totalScore / ${totalShots * 10}",
-                                style = MaterialTheme.typography.titleMedium
-                            )
+                            
+                            // Right side group: Score + Close Button
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = "${l10n.totalScore}: $totalScore / ${totalShots * 10}",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color.White.copy(alpha = 0.9f)
+                                    )
+                                }
+                                
+                                Spacer(modifier = Modifier.width(16.dp))
+                                
+                                // Modern circular close button
+                                Surface(
+                                    onClick = { showAbandonConfirm = true },
+                                    shape = CircleShape,
+                                    color = Color.White.copy(alpha = 0.15f),
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Abandon session",
+                                            modifier = Modifier.size(18.dp),
+                                            tint = Color.White
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -480,7 +518,9 @@ fun AddSessionScreen(
                     ) {
                         TargetFace(
                             ends = endsWithShots.filter { it.end.id == currentEndId },
+                            enabled = currentEndShots.size < 6,
                             onTap = { x, y, _ ->
+                                if (isCreatingSession) return@TargetFace
                                 if (!isSessionActive) {
                                     viewModel.startSessionManual()
                                 } else {
@@ -489,6 +529,16 @@ fun AddSessionScreen(
                                 }
                             }
                         )
+                        if (isCreatingSession) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black.copy(alpha = 0.3f), MaterialTheme.shapes.extraLarge),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = Color.White)
+                            }
+                        }
                     }
 
                     // Hint text underneath target (only before session starts)
@@ -516,6 +566,7 @@ fun AddSessionScreen(
                             ) {
                                 Button(
                                     onClick = { viewModel.undoLastShot() },
+                                    enabled = !isCreatingSession && currentEndShots.isNotEmpty(),
                                     modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -526,12 +577,12 @@ fun AddSessionScreen(
                                     Icon(
                                         Icons.Default.Undo, 
                                         contentDescription = null,
-                                        tint = Color.White
+                                        tint = if (!isCreatingSession && currentEndShots.isNotEmpty()) Color.White else Color.Gray
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
-                                        text = if (currentEndShots.isEmpty()) l10n.close else l10n.cancel,
-                                        color = Color.White
+                                        text = l10n.undo,
+                                        color = if (!isCreatingSession && currentEndShots.isNotEmpty()) Color.White else Color.Gray
                                     )
                                 }
 
@@ -545,16 +596,19 @@ fun AddSessionScreen(
                                             viewModel.moveToNextEnd()
                                         }
                                     },
+                                    enabled = !isCreatingSession && currentEndShots.size >= 6,
                                     modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFF4CAF50),
-                                        contentColor = Color.White
+                                        disabledContainerColor = Color(0xFF4CAF50).copy(alpha = 0.3f),
+                                        contentColor = Color.White,
+                                        disabledContentColor = Color.White.copy(alpha = 0.5f)
                                     ),
                                     contentPadding = PaddingValues(vertical = 12.dp)
                                 ) {
                                     Text(
-                                        text = l10n.start,
-                                        color = Color.White
+                                        text = if (currentEndShots.size >= 6) l10n.start else l10n.start, // Simplified for now, but l10n.start is used for both
+                                        color = if (isCreatingSession) Color.Gray else Color.White
                                     )
                                 }
 
@@ -565,6 +619,7 @@ fun AddSessionScreen(
                                         }
                                         viewModel.finishSession()
                                     },
+                                    enabled = !isCreatingSession,
                                     modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFFE57373),
@@ -574,7 +629,7 @@ fun AddSessionScreen(
                                 ) {
                                     Text(
                                         text = l10n.finish,
-                                        color = Color.White
+                                        color = if (isCreatingSession) Color.Gray else Color.White
                                     )
                                 }
                             }

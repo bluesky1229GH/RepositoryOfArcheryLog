@@ -5,7 +5,7 @@ import androidx.room.*
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [User::class, ArcherySession::class, SessionEnd::class, Shot::class, AiFavorite::class], version = 10, exportSchema = false)
+@Database(entities = [User::class, ArcherySession::class, SessionEnd::class, Shot::class, AiFavorite::class], version = 12, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class ArcheryDatabase : RoomDatabase() {
     abstract fun archeryDao(): ArcheryDao
