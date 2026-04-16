@@ -111,19 +111,19 @@ class L10n(val language: AppLanguage) {
         AppLanguage.CHINESE -> "使用说明"
     }
     val usageGuide = when(language) {
-        AppLanguage.ENGLISH -> "1. Click Target to score\n2. View performance at top\n3. Click Undo to fix mistakes\n4. Save after 6 arrows\n5. Click outside to reset"
-        AppLanguage.JAPANESE -> "1. 的をタップして記録\n2. 上部バーで点数を確認\n3. 左下で一射分をやり直し\n4. 6本射ったら保存\n5. 的の外をタップでリセット"
-        AppLanguage.CHINESE -> "1. 点击靶纸：点击即录入分数\n2. 实时查看：顶部查看当前得分\n3. 撤销错误：点左下角按钮回退\n4. 组间切换：射满6箭后点[下组]\n5. 重置本组：点击靶纸外黑色区"
+        AppLanguage.ENGLISH -> "• Top Area: Tap Title/Venue info. Select Distance, Weather, and Wind via dropdowns.\n• Bottom Area: Tap the target to enter scoring mode."
+        AppLanguage.JAPANESE -> "• 上部：タイトルと会場を入力。距離・天気・風をドロップダウンで選択します。\n• 下部：的をタップして記録モードに切り替えます。"
+        AppLanguage.CHINESE -> "• 屏幕上半部：点击标题和场地栏录入详情；通过下拉菜单选择距离、天气及风力。\n• 屏幕下半部：点击靶纸展开记录页面。"
     }
     val setupGuide = when(language) {
-        AppLanguage.ENGLISH -> "• Select your distance and venue type.\n• Record weather to analyze external factors.\n• Check accuracy before starting."
-        AppLanguage.JAPANESE -> "• 距離と会場タイプを選択します。\n• 天気を記録して外部要因を分析します。\n• 開始前に正確性を確認してください。"
-        AppLanguage.CHINESE -> "• 选择您的射击距离和场地类型。\n• 记录天气可帮助分析环境对成绩的影响。\n• 开始前请核对各项设置是否准确。"
+        AppLanguage.ENGLISH -> "1. Scoring: Tap positions directly on the target.\n2. Navigation: Top-left shows current End; top-right shows Total Score and Close."
+        AppLanguage.JAPANESE -> "1. 記録：的の着弾地点を直接タップして記録します。\n2. 画面：左上に現在のエンド数、右上に合計得点と閉じるボタンを表示。"
+        AppLanguage.CHINESE -> "1. 记录方式：在记录页面直接点击靶纸上的位置即刻录入分数。\n2. 界面显示：左上方显示当前组数，右上方显示总分及关闭按钮。"
     }
     val notes = when(language) {
-        AppLanguage.ENGLISH -> "• Clicking outside the expanded target will cancel current record.\n• Ensure to tap 'Finish' after 6 ends to save."
-        AppLanguage.JAPANESE -> "• 拡大されたターゲットの外側をタップすると、現在の記録がキャンセルされます。\n• 6エンド終了後、必ず「記録完了」をタップして保存してください。"
-        AppLanguage.CHINESE -> "• 展开靶纸后，点击靶纸周围区域将放弃当前记录。\n• 完成6轮练习后，务必点击「记录完成」以保存数据。"
+        AppLanguage.ENGLISH -> "• Buttons: Bottom-left [Undo]; Middle [Next] (after 6 shots); Bottom-right [Finish] to save.\n• Arrow scores are displayed at the very bottom."
+        AppLanguage.JAPANESE -> "• 操作：左下[取り消し]、中央[次へ]（6射後）、右下[記録完了]で保存。\n• 画面最下部に各矢の環数が表示されます。"
+        AppLanguage.CHINESE -> "• 功能按钮：左下角[撤销]按钮；中间[下一组]按钮（满6箭时）；右下角[记录完成]显示后即可点击保存。\n• 页面最下方将动态显示当前组的所有环数。"
     }
     val close = when(language) {
         AppLanguage.ENGLISH -> "Close"

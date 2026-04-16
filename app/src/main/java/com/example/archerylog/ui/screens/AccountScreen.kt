@@ -60,6 +60,7 @@ fun AccountScreen(
     }
     
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = { TopAppBar(title = { Text(l10n.accountTitle) }) }
     ) { padding ->
         Column(

@@ -32,6 +32,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
@@ -101,10 +104,13 @@ fun ArcheryApp(viewModel: ArcheryViewModel) {
             if (currentRoute in bottomBarRoutes) {
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.fillMaxWidth().height(84.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .windowInsetsPadding(WindowInsets.navigationBars)
+                            .fillMaxWidth()
+                            .height(64.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // All navigation actions set to launchSingleTop and restoreState for tab-like behavior

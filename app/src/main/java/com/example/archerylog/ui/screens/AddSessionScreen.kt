@@ -145,6 +145,7 @@ fun AddSessionScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = { Text(l10n.newSession) },
@@ -168,8 +169,15 @@ fun AddSessionScreen(
                     }
                 },
                 text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        l10n.usageGuide.split("\n").forEach { step ->
+                    val allSteps = listOf(l10n.usageGuide, l10n.setupGuide, l10n.notes)
+                        .flatMap { it.split("\n") }
+                        .filter { it.isNotBlank() }
+                    
+                    Column(
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        allSteps.forEach { step ->
                             Row(verticalAlignment = Alignment.Top) {
                                 Surface(
                                     shape = CircleShape,
@@ -189,7 +197,7 @@ fun AddSessionScreen(
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = step.substringAfter(". ").trim(),
+                                    text = step.replace("^•\\s*".toRegex(), "").replace("^\\d+\\.\\s*".toRegex(), "").trim(),
                                     style = MaterialTheme.typography.bodyLarge,
                                     lineHeight = 22.sp
                                 )
