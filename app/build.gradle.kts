@@ -110,7 +110,6 @@ dependencies {
 
     // Ktor & Serialization (Upgraded to 3.0.0 for Kotlin 2.1.0/AS Panda 3)
     val ktor_version = "3.0.0"
-    implementation("io.ktor:ktor-client-android:$ktor_version")
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
