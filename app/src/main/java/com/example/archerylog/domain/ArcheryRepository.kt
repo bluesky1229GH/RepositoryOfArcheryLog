@@ -71,6 +71,7 @@ class ArcheryRepository(private val archeryDao: ArcheryDao) {
     fun getEndsWithShotsForSession(sessionId: String) = archeryDao.getEndsWithShotsForSession(sessionId)
     suspend fun deleteSession(sessionId: String) = archeryDao.deleteSessionById(sessionId)
     suspend fun deleteEnd(endId: String) = archeryDao.deleteEndById(endId)
+    suspend fun deleteEmptyEndsForSession(sessionId: String) = archeryDao.deleteEmptyEndsForSession(sessionId)
     suspend fun getSessionById(sessionId: String) = archeryDao.getSessionById(sessionId)
     fun getSessionByIdFlow(sessionId: String) = archeryDao.getSessionByIdFlow(sessionId)
 

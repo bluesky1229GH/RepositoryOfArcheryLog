@@ -68,6 +68,9 @@ interface ArcheryDao {
     @Query("UPDATE sessions SET totalScore = totalScore + :score, totalShots = totalShots + :shotsCount WHERE id = :sessionId")
     suspend fun modifySessionScore(sessionId: String, score: Int, shotsCount: Int)
 
+    @Query("DELETE FROM ends WHERE sessionId = :sessionId AND id NOT IN (SELECT endId FROM shots)")
+    suspend fun deleteEmptyEndsForSession(sessionId: String)
+
     @Query("DELETE FROM shots WHERE id = :shotId")
     suspend fun deleteShotById(shotId: String)
 

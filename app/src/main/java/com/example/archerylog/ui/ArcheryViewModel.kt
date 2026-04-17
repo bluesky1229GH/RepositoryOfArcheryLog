@@ -296,7 +296,16 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             return
         }
 
-        resetSessionState()
+        viewModelScope.launch {
+            // Cleanup: remove any 'ends' that have 0 shots (e.g. the ghost end 7)
+            try {
+                repository.deleteEmptyEndsForSession(sessionId)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            
+            resetSessionState()
+        }
     }
 
     private fun resetSessionState() {
