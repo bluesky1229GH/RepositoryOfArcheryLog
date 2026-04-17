@@ -47,6 +47,9 @@ interface ArcheryDao {
     @Query("UPDATE users SET email = :newEmail WHERE id = :userId")
     suspend fun updateEmail(userId: String, newEmail: String)
 
+    @Query("UPDATE users SET username = :newUsername WHERE id = :userId")
+    suspend fun updateUsername(userId: String, newUsername: String)
+
     @Query("UPDATE users SET avatarUri = :newUri WHERE id = :userId")
     suspend fun updateAvatarUri(userId: String, newUri: String)
 

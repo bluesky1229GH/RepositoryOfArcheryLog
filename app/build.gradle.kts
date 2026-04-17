@@ -2,10 +2,10 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android") version "2.3.20"
-    id("com.google.devtools.ksp") version "2.3.6"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.20"
-    id("org.jetbrains.kotlin.plugin.compose") version "2.3.20"
+    id("org.jetbrains.kotlin.android") version "2.0.20"
+    id("com.google.devtools.ksp") version "2.0.20-1.0.24"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.20"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.20"
 }
 
 configurations.all {
@@ -15,11 +15,11 @@ configurations.all {
                 useVersion("1.8.0")
             }
             if (requested.group == "org.jetbrains.kotlin") {
-                useVersion("2.3.20")
+                useVersion("2.0.20")
             }
         }
         force("androidx.browser:browser:1.8.0")
-        force("org.jetbrains.kotlin:kotlin-stdlib:2.3.20")
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.0.20")
     }
 }
 
@@ -102,21 +102,21 @@ dependencies {
     // Gemini AI (Upgraded to handle 1.5-flash stability)
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
-    // Supabase (Official 3.x BOM)
-    implementation(platform("io.github.jan-tennert.supabase:bom:3.5.0"))
+    // Supabase (Official 3.x Stable)
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.1"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.github.jan-tennert.supabase:realtime-kt")
 
-    // Ktor & Serialization (Upgraded to 3.0.0 for Kotlin 2.1.0/AS Panda 3)
+    // Ktor & Serialization (Pinned to standard stable versions for Kotlin 2.0.20)
     val ktor_version = "3.0.0"
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
-    // Room (Upgraded to 2.8.4 for Kotlin 2.3.20 compatibility)
-    val roomVersion = "2.8.4"
+    // Room (Normalizing to stable 2.6.1)
+    val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")

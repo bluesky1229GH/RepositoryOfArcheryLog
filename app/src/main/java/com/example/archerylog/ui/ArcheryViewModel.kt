@@ -40,6 +40,15 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             encodeDefaults = true
         })
     }
+    
+    // DEBUG: Check if we have valid cloud credentials
+    init {
+        val url = com.example.archerylog.BuildConfig.SUPABASE_URL
+        val key = com.example.archerylog.BuildConfig.SUPABASE_ANON_KEY
+        if (url.isBlank() || key.isBlank()) {
+            android.util.Log.e("ArcheryLog", "CRITICAL ERROR: Supabase URL or Key is blank! Check local.properties or gradle.properties")
+        }
+    }
 
     private val generativeModel by lazy {
         GenerativeModel(
@@ -88,17 +97,13 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         val userId = _currentUserId.value
         if (userId.isNotBlank()) {
             viewModelScope.launch {
-                // Ensure local profile exists so UI doesn't hang on "Loading..."
                 try {
-                    if (repository.getUserById(userId) == null) {
-                        val session = supabase.auth.currentSessionOrNull()
-                        val email = session?.user?.email ?: ""
-                        repository.insertUser(User(id = userId, email = email, username = email.substringBefore("@")))
-                    }
+                    // Just trigger sync. The sync logic now handles reconstruction if local profile is missing.
+                    syncDataFromCloud(userId)
                 } catch (e: Exception) {
+                    android.util.Log.e("ArcheryLog", "Failed to initialize and sync on startup: ${e.message}")
                     e.printStackTrace()
                 }
-                syncDataFromCloud(userId)
             }
         }
     }
@@ -332,8 +337,16 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 this.password = passwordHash
             }
             val userId = supabase.auth.currentUserOrNull()?.id ?: return "Registration failed: No user ID returned"
-            // Create local profile
-            repository.insertUser(User(id = userId, email = email, username = email.substringBefore("@")))
+            
+            // 1. Create Profile Data
+            val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
+            
+            // 2. Push to Cloud (Crucial for username login later)
+            supabase.postgrest.from("users").upsert(newUser)
+            
+            // 3. Save locally
+            repository.insertUser(newUser)
+            
             loginInternal(userId)
             null // Success
         } catch (e: Exception) {
@@ -347,26 +360,76 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    suspend fun login(email: String, passwordHash: String): String? {
+    suspend fun login(identifier: String, passwordHash: String): String? {
         return try { 
+            var finalEmail = identifier
+            
+            // If identifier is NOT an email, look up the email by username in Supabase
+            if (!identifier.contains("@")) {
+                val cloudUser = try {
+                    supabase.postgrest.from("users")
+                        .select { 
+                            // Case-insensitive lookup (Postgres ilike equivalent)
+                            filter { 
+                                or {
+                                    eq("username", identifier.lowercase())
+                                    eq("username", identifier) 
+                                }
+                            }
+                        }
+                        .decodeSingleOrNull<User>()
+                } catch (e: Exception) {
+                    android.util.Log.e("ArcheryLogin", "Username lookup network/permission error: ${e.message}")
+                    return "网络异常或服务器权限验证失败，请尝试使用邮箱登录"
+                }
+                
+                if (cloudUser == null || cloudUser.email == null) {
+                    android.util.Log.e("ArcheryLogin", "Username '$identifier' not found in cloud 'users' table")
+                    return "用户名不存在，请检查拼写或尝试使用邮箱登录"
+                }
+                finalEmail = cloudUser.email!!
+                android.util.Log.e("ArcheryLogin", "Username '$identifier' resolved to email: $finalEmail")
+            }
+
             supabase.auth.signInWith(Email) {
-                this.email = email
+                this.email = finalEmail
                 this.password = passwordHash
             }
             val userId = supabase.auth.currentUserOrNull()?.id ?: return "登录失败：未获取到 ID"
             
-            if (repository.getUserById(userId) == null) {
-                repository.insertUser(User(id = userId, email = email, username = email.substringBefore("@")))
+            // MANDATORY OVERWRITE: Always ensure the local profile has the correct verified email from Auth
+            val cloudProfile = try {
+                supabase.postgrest.from("users")
+                    .select { filter { eq("id", userId) } }
+                    .decodeSingleOrNull<User>()
+            } catch (e: Exception) { null }
+            
+            // If cloud profile is missing, we use the verified email from the current session
+            val finalUser = cloudProfile ?: User(
+                id = userId, 
+                email = finalEmail, 
+                username = finalEmail.substringBefore("@")
+            )
+            repository.insertUser(finalUser)
+            
+            // PUSH BACK TO CLOUD: If cloudProfile was missing, sync our data back up
+            if (cloudProfile == null) {
+                try {
+                    supabase.postgrest.from("users").upsert(finalUser)
+                } catch (e: Exception) {
+                    android.util.Log.e("ArcherySync", "Failed to push initial profile to cloud: ${e.message}")
+                }
             }
+            
             loginInternal(userId)
-            null
+            null // Success
         } catch (e: Exception) {
             e.printStackTrace()
             val msg = e.localizedMessage ?: ""
             if (msg.contains("invalid_credentials", ignoreCase = true)) {
-                "邮箱或密码错误"
+                "标识符（邮箱/用户名）或密码错误"
             } else {
-                "登录失败，请确认账号是否存在或密码正确"
+                "登录失败，请检查网络或账号密码"
             }
         }
     }
@@ -401,18 +464,40 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                     android.util.Log.e("ArcherySync", "PROBE FAILED: ${e.message}")
                 }
 
-                // 0. Sync User Profile (Optional)
+                // 0. Sync User Profile (With Auth session fallback)
                 try {
-                    val cloudUser = supabase.postgrest.from("users")
-                        .select { filter { eq("id", userId) } }
-                        .decodeSingleOrNull<User>()
+                    val cloudUser = try {
+                        supabase.postgrest.from("users")
+                            .select { filter { eq("id", userId) } }
+                            .decodeSingleOrNull<User>()
+                    } catch (e: Exception) { null }
                     
                     if (cloudUser != null) {
                         android.util.Log.e("ArcherySync", "User profile fetched: ${cloudUser.username}")
                         repository.insertUser(cloudUser)
+                    } else {
+                        // FALLBACK: If user profile record doesn't exist in 'users' table, 
+                        // try to reconstruct from Auth session
+                        android.util.Log.e("ArcherySync", "Cloud profile missing in 'users' table, using session fallback")
+                        val session = try { supabase.auth.retrieveUserForCurrentSession(updateSession = true) } catch (e: Exception) { null }
+                        val email = session?.email
+                        if (email != null) {
+                            val local = repository.getUserById(userId)
+                            // Only update if current local is empty OR is a placeholder 'archer_xxxx'
+                            if (local == null || local.username.startsWith("archer_")) {
+                                val repairedUser = User(id = userId, email = email, username = email.substringBefore("@"))
+                                repository.insertUser(repairedUser)
+                                // IMPORTANT: Push this repaired profile back to cloud so username login works next time
+                                try {
+                                    supabase.postgrest.from("users").upsert(repairedUser)
+                                } catch (e: Exception) {
+                                    android.util.Log.e("ArcherySync", "Failed to sync repaired profile back to cloud: ${e.message}")
+                                }
+                            }
+                        }
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("ArcherySync", "Optional User profile sync skipped: ${e.message}")
+                    android.util.Log.e("ArcherySync", "User profile sync error: ${e.message}")
                 }
 
                 // 1. Fetch and Sync Sessions
@@ -537,6 +622,38 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    suspend fun updateUsername(newUsername: String): String? {
+        val userId = _currentUserId.value
+        if (userId.isBlank()) return "Update failed: Not logged in"
+        if (newUsername.isBlank()) return "用户名不能为空"
+        
+        return try {
+            // 1. Cloud side uniqueness check
+            val existing = supabase.postgrest.from("users")
+                .select { filter { eq("username", newUsername) } }
+                .decodeSingleOrNull<User>()
+            
+            if (existing != null && existing.id != userId) {
+                return "该用户名已被占用"
+            }
+            
+            // 2. Fetch current user to preserve email/avatar
+            val currentUserData = repository.getUserById(userId) ?: return "User profile not found"
+            val updatedUser = currentUserData.copy(username = newUsername)
+            
+            // 3. Push to Cloud
+            supabase.postgrest.from("users").upsert(updatedUser)
+            
+            // 4. Update locally
+            repository.updateUsername(userId, newUsername)
+            
+            null // Success
+        } catch (e: Exception) {
+            e.printStackTrace()
+            "更新失败：${e.localizedMessage}"
+        }
+    }
+
     fun deleteAiFavorite(id: String) {
         viewModelScope.launch {
             repository.deleteAiFavorite(id)
@@ -544,13 +661,24 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun updateEmail(newEmail: String) {
+        val userId = _currentUserId.value
+        if (userId.isBlank()) return
         viewModelScope.launch {
             try {
+                // 1. Update Auth
                 supabase.auth.updateUser {
                     email = newEmail
                 }
-                repository.updateEmail(_currentUserId.value, newEmail)
-            } catch (e: Exception) {}
+                // 2. Update Local
+                repository.updateEmail(userId, newEmail)
+                // 3. Update Cloud Profile
+                val user = repository.getUserById(userId)
+                if (user != null) {
+                    supabase.postgrest.from("users").upsert(user.copy(email = newEmail))
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 

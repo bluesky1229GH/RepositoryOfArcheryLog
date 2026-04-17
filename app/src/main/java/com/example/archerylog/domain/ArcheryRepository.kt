@@ -25,6 +25,10 @@ class ArcheryRepository(private val archeryDao: ArcheryDao) {
         archeryDao.updateEmail(userId, newEmail)
     }
 
+    suspend fun updateUsername(userId: String, newUsername: String) {
+        archeryDao.updateUsername(userId, newUsername)
+    }
+
     suspend fun updateAvatarUri(userId: String, newUri: String) {
         archeryDao.updateAvatarUri(userId, newUri)
     }

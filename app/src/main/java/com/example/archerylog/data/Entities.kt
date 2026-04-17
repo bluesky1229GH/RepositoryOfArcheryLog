@@ -15,7 +15,10 @@ enum class LocationType {
 }
 
 @Serializable
-@Entity(tableName = "users")
+@Entity(
+    tableName = "users",
+    indices = [Index(value = ["username"], unique = true)]
+)
 data class User(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val username: String,

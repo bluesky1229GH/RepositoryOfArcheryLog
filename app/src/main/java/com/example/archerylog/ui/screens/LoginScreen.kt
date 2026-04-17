@@ -24,7 +24,7 @@ fun LoginScreen(
     val l10n = L10n(currentLanguage)
     val scope = rememberCoroutineScope()
 
-    var email by remember { mutableStateOf("") }
+    var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isSignUp by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -46,10 +46,10 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text(l10n.email) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            value = identifier,
+            onValueChange = { identifier = it },
+            label = { Text(if (isSignUp) l10n.email else l10n.identifier) },
+            keyboardOptions = KeyboardOptions(keyboardType = if (isSignUp) KeyboardType.Email else KeyboardType.Text),
             modifier = Modifier.fillMaxWidth()
         )
         
@@ -78,9 +78,9 @@ fun LoginScreen(
             onClick = {
                 scope.launch {
                     val errorMsg = if (isSignUp) {
-                        viewModel.signup(email, password)
+                        viewModel.signup(identifier, password)
                     } else {
-                        viewModel.login(email, password)
+                        viewModel.login(identifier, password)
                     }
                     
                     if (errorMsg == null) {

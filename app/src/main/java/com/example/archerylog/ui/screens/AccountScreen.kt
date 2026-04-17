@@ -24,6 +24,7 @@ import com.example.archerylog.ui.utils.L10n
 import com.example.archerylog.ui.utils.AppLanguage
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +38,7 @@ fun AccountScreen(
     
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
+    var showUsernameDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     
     val context = LocalContext.current
@@ -95,8 +97,15 @@ fun AccountScreen(
                 
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(l10n.username, style = MaterialTheme.typography.labelMedium)
-                        Text(user.username, style = MaterialTheme.typography.bodyLarge)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(l10n.username, style = MaterialTheme.typography.labelMedium)
+                                Text(user.username, style = MaterialTheme.typography.bodyLarge)
+                            }
+                            IconButton(onClick = { showUsernameDialog = true }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit Username")
+                            }
+                        }
                         
                         Divider(modifier = Modifier.padding(vertical = 8.dp))
                         
@@ -283,6 +292,69 @@ fun AccountScreen(
         }
     }
     
+    if (showUsernameDialog) {
+        var newUsername by remember { mutableStateOf(currentUser?.username ?: "") }
+        var isUpdating by remember { mutableStateOf(false) }
+        var errorMessage by remember { mutableStateOf("") }
+        val scope = rememberCoroutineScope()
+
+        AlertDialog(
+            onDismissRequest = { if (!isUpdating) showUsernameDialog = false },
+            title = { Text(l10n.changeUsername) },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = newUsername,
+                        onValueChange = { 
+                            newUsername = it
+                            errorMessage = "" 
+                        },
+                        label = { Text(l10n.username) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isUpdating
+                    )
+                    if (errorMessage.isNotEmpty()) {
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                    if (isUpdating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !isUpdating && newUsername.isNotBlank() && newUsername != currentUser?.username,
+                    onClick = {
+                        isUpdating = true
+                        scope.launch {
+                            val result = viewModel.updateUsername(newUsername)
+                            if (result == null) {
+                                showUsernameDialog = false
+                            } else {
+                                errorMessage = result
+                                isUpdating = false
+                            }
+                        }
+                    }
+                ) { Text(l10n.save) }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !isUpdating,
+                    onClick = { showUsernameDialog = false }
+                ) { Text(l10n.cancel) }
+            }
+        )
+    }
+
     if (showEmailDialog) {
         var newEmail by remember { mutableStateOf(currentUser?.email ?: "") }
         AlertDialog(

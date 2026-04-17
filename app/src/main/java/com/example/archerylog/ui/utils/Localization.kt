@@ -288,6 +288,11 @@ class L10n(val language: AppLanguage) {
         AppLanguage.JAPANESE -> "メール"
         AppLanguage.CHINESE -> "邮箱"
     }
+    val identifier = when(language) {
+        AppLanguage.ENGLISH -> "Email or Username"
+        AppLanguage.JAPANESE -> "メールまたはユーザー名"
+        AppLanguage.CHINESE -> "邮箱或用户名"
+    }
     val sessionTitle = when(language) {
         AppLanguage.ENGLISH -> "Title"
         AppLanguage.JAPANESE -> "タイトル"
@@ -379,6 +384,11 @@ class L10n(val language: AppLanguage) {
         AppLanguage.ENGLISH -> "Change Password"
         AppLanguage.JAPANESE -> "パスワード変更"
         AppLanguage.CHINESE -> "更改密码"
+    }
+    val changeUsername = when(language) {
+        AppLanguage.ENGLISH -> "Change Username"
+        AppLanguage.JAPANESE -> "ユーザー名変更"
+        AppLanguage.CHINESE -> "修改用户名"
     }
     val oldPassword = when(language) {
         AppLanguage.ENGLISH -> "Old Password"
