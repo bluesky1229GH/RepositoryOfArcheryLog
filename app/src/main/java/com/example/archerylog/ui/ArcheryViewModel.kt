@@ -348,7 +348,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     suspend fun login(email: String, passwordHash: String): String? {
-        return try {
+        return try { 
             supabase.auth.signInWith(Email) {
                 this.email = email
                 this.password = passwordHash

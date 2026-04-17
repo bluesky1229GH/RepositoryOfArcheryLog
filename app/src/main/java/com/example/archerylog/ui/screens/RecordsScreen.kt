@@ -157,6 +157,7 @@ fun RecordsScreen(
         CustomWheelDatePickerDialog(
             initialDateMillis = startDateMillis ?: System.currentTimeMillis(),
             l10n = l10n,
+            maxDateMillis = endDateMillis, // Start date cannot be after end date
             onDismiss = { pickingStart = false },
             onConfirmDate = { millis -> 
                 startDateMillis = millis
@@ -169,6 +170,7 @@ fun RecordsScreen(
         CustomWheelDatePickerDialog(
             initialDateMillis = endDateMillis ?: System.currentTimeMillis(),
             l10n = l10n,
+            minDateMillis = startDateMillis, // End date cannot be before start date
             onDismiss = { pickingEnd = false },
             onConfirmDate = { millis -> 
                 endDateMillis = millis

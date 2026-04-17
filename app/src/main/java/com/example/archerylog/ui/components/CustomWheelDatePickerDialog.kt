@@ -26,52 +26,139 @@ fun CustomWheelDatePickerDialog(
     initialDateMillis: Long,
     l10n: L10n,
     onDismiss: () -> Unit,
-    onConfirmDate: (Long) -> Unit
+    onConfirmDate: (Long) -> Unit,
+    minDateMillis: Long? = null,
+    maxDateMillis: Long? = null
 ) {
-    val calendar = Calendar.getInstance().apply { timeInMillis = initialDateMillis }
-    val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+    val initialCalendar = Calendar.getInstance().apply { timeInMillis = initialDateMillis }
     
-    val years = (2020..currentYear + 5).toList()
-    val months = (1..12).toList()
-    
-    var selectedYear by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
-    var selectedMonth by remember { mutableStateOf(calendar.get(Calendar.MONTH) + 1) } // 1-12
-    var selectedDay by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_MONTH)) }
+    val minCal = minDateMillis?.let { Calendar.getInstance().apply { timeInMillis = it } }
+    val maxCal = maxDateMillis?.let { Calendar.getInstance().apply { timeInMillis = it } }
 
-    // Number of days in selected month
-    val daysInMonth = remember(selectedYear, selectedMonth) {
+    val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+    val defaultMaxYear = currentYear + 10
+    
+    // 1. Calculate Available Years
+    val years = remember(minCal, maxCal) {
+        val startYear = minCal?.get(Calendar.YEAR) ?: 2020
+        val endYear = maxCal?.get(Calendar.YEAR) ?: defaultMaxYear
+        (startYear..endYear).toList()
+    }
+
+    var selectedYear by remember { 
+        val year = initialCalendar.get(Calendar.YEAR)
+        mutableStateOf(year.coerceIn(years.first(), years.last())) 
+    }
+
+    // 2. Calculate Available Months for selectedYear
+    val months = remember(selectedYear, minCal, maxCal) {
+        val minMonth = if (minCal != null && selectedYear == minCal.get(Calendar.YEAR)) {
+            minCal.get(Calendar.MONTH) + 1
+        } else 1
+        
+        val maxMonth = if (maxCal != null && selectedYear == maxCal.get(Calendar.YEAR)) {
+            maxCal.get(Calendar.MONTH) + 1
+        } else 12
+        
+        (minMonth..maxMonth).toList()
+    }
+
+    var selectedMonth by remember(selectedYear) {
+        val month = initialCalendar.get(Calendar.MONTH) + 1
+        mutableStateOf(month.coerceIn(months.first(), months.last()))
+    }
+
+    // Adjust selectedMonth if it goes out of bounds when year changes
+    LaunchedEffect(months) {
+        if (selectedMonth !in months) {
+            selectedMonth = selectedMonth.coerceIn(months.first(), months.last())
+        }
+    }
+
+    // 3. Calculate Available Days for selectedYear and selectedMonth
+    val days = remember(selectedYear, selectedMonth, minCal, maxCal) {
         val cal = Calendar.getInstance()
         cal.set(selectedYear, selectedMonth - 1, 1)
-        cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+        val maxDaysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+        
+        val minDay = if (minCal != null && selectedYear == minCal.get(Calendar.YEAR) && (selectedMonth - 1) == minCal.get(Calendar.MONTH)) {
+            minCal.get(Calendar.DAY_OF_MONTH)
+        } else 1
+        
+        val maxDay = if (maxCal != null && selectedYear == maxCal.get(Calendar.YEAR) && (selectedMonth - 1) == maxCal.get(Calendar.MONTH)) {
+            maxCal.get(Calendar.DAY_OF_MONTH)
+        } else maxDaysInMonth
+        
+        (minDay..maxDay).toList()
+    }
+
+    var selectedDay by remember(selectedYear, selectedMonth) {
+        val day = initialCalendar.get(Calendar.DAY_OF_MONTH)
+        mutableStateOf(day.coerceIn(days.first(), days.last()))
+    }
+
+    // Adjust selectedDay if it goes out of bounds when month changes
+    LaunchedEffect(days) {
+        if (selectedDay !in days) {
+            selectedDay = selectedDay.coerceIn(days.first(), days.last())
+        }
+    }
+
+    val yearState = rememberPagerState(initialPage = years.indexOf(selectedYear).coerceAtLeast(0), pageCount = { years.size })
+    val monthState = rememberPagerState(initialPage = months.indexOf(selectedMonth).coerceAtLeast(0), pageCount = { months.size })
+    val dayState = rememberPagerState(initialPage = days.indexOf(selectedDay).coerceAtLeast(0), pageCount = { days.size })
+
+    // Update state variables and PagerState sync
+    LaunchedEffect(yearState.currentPage) {
+        val newYear = years.getOrElse(yearState.currentPage) { years.first() }
+        if (selectedYear != newYear) {
+            selectedYear = newYear
+        }
     }
     
-    // Ensure day doesn't exceed max days
-    if (selectedDay > daysInMonth) {
-        selectedDay = daysInMonth
-    }
-    val days = (1..daysInMonth).toList()
-
-    val yearState = rememberPagerState(initialPage = years.indexOf(selectedYear), pageCount = { years.size })
-    val monthState = rememberPagerState(initialPage = months.indexOf(selectedMonth), pageCount = { months.size })
-    val dayState = rememberPagerState(initialPage = days.indexOf(selectedDay), pageCount = { days.size })
-
-    // Update state variables when pagers snap
-    LaunchedEffect(yearState.currentPage) {
-        selectedYear = years.getOrElse(yearState.currentPage) { years.first() }
-    }
     LaunchedEffect(monthState.currentPage) {
-        selectedMonth = months.getOrElse(monthState.currentPage) { months.first() }
+        val newMonth = months.getOrElse(monthState.currentPage) { months.first() }
+        if (selectedMonth != newMonth) {
+            selectedMonth = newMonth
+        }
     }
-    LaunchedEffect(dayState.currentPage, days) {
-        selectedDay = days.getOrElse(dayState.currentPage) { days.first() }
+    
+    LaunchedEffect(dayState.currentPage) {
+        val newDay = days.getOrElse(dayState.currentPage) { days.first() }
+        if (selectedDay != newDay) {
+            selectedDay = newDay
+        }
     }
 
-    // Use the app's language locale for weekday display
+    // Handle index shifts when list contents change (e.g. going from year with 12 months to year with 3 months)
+    LaunchedEffect(selectedMonth, months) {
+        val targetPage = months.indexOf(selectedMonth)
+        if (targetPage != -1 && targetPage != monthState.currentPage) {
+            monthState.scrollToPage(targetPage)
+        }
+    }
+    
+    LaunchedEffect(selectedDay, days) {
+        val targetPage = days.indexOf(selectedDay)
+        if (targetPage != -1 && targetPage != dayState.currentPage) {
+            dayState.scrollToPage(targetPage)
+        }
+    }
+
     val dayOfWeekFormatter = SimpleDateFormat("EEEE", l10n.pickerLocale)
     val selectedCal = Calendar.getInstance().apply {
         set(selectedYear, selectedMonth - 1, selectedDay)
     }
     val dayOfWeekStr = dayOfWeekFormatter.format(selectedCal.time)
+
+    // Check if quick buttons are valid
+    val today = Calendar.getInstance()
+    val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+    
+    val isTodayValid = (minDateMillis == null || today.timeInMillis >= minDateMillis) && 
+                       (maxDateMillis == null || today.timeInMillis <= maxDateMillis)
+    val isYesterdayValid = (minDateMillis == null || yesterday.timeInMillis >= minDateMillis) && 
+                           (maxDateMillis == null || yesterday.timeInMillis <= maxDateMillis)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -105,23 +192,21 @@ fun CustomWheelDatePickerDialog(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = {
-                            val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
-                            onConfirmDate(yesterday.timeInMillis)
-                        },
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF4CAF50))
-                    ) {
-                        Text(l10n.pickerYesterday)
+                    if (isYesterdayValid) {
+                        OutlinedButton(
+                            onClick = { onConfirmDate(yesterday.timeInMillis) },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF4CAF50))
+                        ) {
+                            Text(l10n.pickerYesterday)
+                        }
                     }
-                    OutlinedButton(
-                        onClick = {
-                            val today = Calendar.getInstance()
-                            onConfirmDate(today.timeInMillis)
-                        },
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF4CAF50))
-                    ) {
-                        Text(l10n.pickerToday)
+                    if (isTodayValid) {
+                        OutlinedButton(
+                            onClick = { onConfirmDate(today.timeInMillis) },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF4CAF50))
+                        ) {
+                            Text(l10n.pickerToday)
+                        }
                     }
                 }
 
@@ -149,7 +234,7 @@ fun CustomWheelDatePickerDialog(
                         VerticalPager(
                             state = yearState,
                             contentPadding = PaddingValues(vertical = 55.dp),
-                            modifier = Modifier.height(150.dp).weight(1f)
+                            modifier = Modifier.height(150.dp).weight(1.2f)
                         ) { page ->
                             val text = "${years[page]}${l10n.pickerYearSuffix}"
                             WheelText(text, isSelected = page == yearState.currentPage)
@@ -159,10 +244,10 @@ fun CustomWheelDatePickerDialog(
                         VerticalPager(
                             state = monthState,
                             contentPadding = PaddingValues(vertical = 55.dp),
-                            modifier = Modifier.height(150.dp).weight(1f)
+                            modifier = Modifier.height(150.dp).weight(1.5f)
                         ) { page ->
                             val text = if (l10n.pickerMonthNames.isNotEmpty()) {
-                                l10n.pickerMonthNames[months[page] - 1]
+                                l10n.pickerMonthNames.getOrElse(months[page] - 1) { "" }
                             } else {
                                 "${months[page]}${l10n.pickerMonthSuffix}"
                             }
