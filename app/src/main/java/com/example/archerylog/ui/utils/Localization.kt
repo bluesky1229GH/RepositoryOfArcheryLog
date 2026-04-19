@@ -440,12 +440,47 @@ class L10n(val language: AppLanguage) {
     val loginFailed = when(language) {
         AppLanguage.ENGLISH -> "Login Failed. Please check your credentials."
         AppLanguage.JAPANESE -> "ログインに失敗しました。入力内容を確認してください。"
-        AppLanguage.CHINESE -> "登录失败，请检查用户名或密码。"
+        AppLanguage.CHINESE -> "登录失败，请检查网络或账号密码"
+    }
+    val invalidCredentials = when(language) {
+        AppLanguage.ENGLISH -> "Invalid email/username or password."
+        AppLanguage.JAPANESE -> "メール/ユーザー名、またはパスワードが間違っています。"
+        AppLanguage.CHINESE -> "标识符（邮箱/用户名）或密码错误"
+    }
+    val loginNetworkError = when(language) {
+        AppLanguage.ENGLISH -> "Network error or permission denied. Please try logging in with email."
+        AppLanguage.JAPANESE -> "ネットワークエラーまたは権限エラー。メールでログインをお試しください。"
+        AppLanguage.CHINESE -> "网络异常或服务器权限验证失败，请尝试使用邮箱登录"
+    }
+    val loginUserNotFound = when(language) {
+        AppLanguage.ENGLISH -> "Username not found. Please check spelling or try using email."
+        AppLanguage.JAPANESE -> "ユーザー名が見つかりません。綴りを確認するか、メールでお試しください。"
+        AppLanguage.CHINESE -> "用户名不存在，请检查拼写或尝试使用邮箱登录"
+    }
+    val loginNoIdError = when(language) {
+        AppLanguage.ENGLISH -> "Login failed: Could not retrieve ID."
+        AppLanguage.JAPANESE -> "ログイン失敗: IDを取得できません。"
+        AppLanguage.CHINESE -> "登录失败：未获取到 ID"
     }
     val signupFailed = when(language) {
         AppLanguage.ENGLISH -> "Sign up failed. Username might be taken."
         AppLanguage.JAPANESE -> "登録に失敗しました。ユーザー名が既に使われている可能性があります。"
         AppLanguage.CHINESE -> "注册失败，用户名可能已被占用。"
+    }
+    val emailAlreadyRegistered = when(language) {
+        AppLanguage.ENGLISH -> "This email is already registered."
+        AppLanguage.JAPANESE -> "このメールアドレスは既に登録されています。"
+        AppLanguage.CHINESE -> "该邮箱已被注册"
+    }
+    val rateLimitExceeded = when(language) {
+        AppLanguage.ENGLISH -> "Too many requests. Please try again later."
+        AppLanguage.JAPANESE -> "リクエストが多すぎます。後で再度お試しください。"
+        AppLanguage.CHINESE -> "请求过于频繁，请稍后再试"
+    }
+    val operationFailed = when(language) {
+        AppLanguage.ENGLISH -> "Operation failed. Please check network and try again."
+        AppLanguage.JAPANESE -> "操作に失敗しました。通信環境を確認してください。"
+        AppLanguage.CHINESE -> "操作失败，请检查网络后再试"
     }
 
     // Email Verification

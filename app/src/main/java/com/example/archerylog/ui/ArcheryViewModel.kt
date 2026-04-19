@@ -344,23 +344,53 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     suspend fun signup(email: String, passwordHash: String): String? {
         val l10n = L10n(currentLanguage.value)
         return try {
-            supabase.auth.signUpWith(Email) {
+            // 0. 黑科技：在注册前绕过防枚举机制，先去后台强行查一次邮箱是否存在
+            val params = kotlinx.serialization.json.buildJsonObject {
+                put("check_email", kotlinx.serialization.json.JsonPrimitive(email))
+            }
+            val isEmailRegistered = try {
+                val rpcResult = supabase.postgrest.rpc("check_email_exists", params).data
+                android.util.Log.d("ArcherySignup", "Check email RPC returned raw data: $rpcResult")
+                rpcResult.trim() == "true"
+            } catch (e: Exception) {
+                android.util.Log.e("ArcherySignup", "Check email RPC failed: ${e.message}")
+                false
+            }
+            if (isEmailRegistered) {
+                return l10n.emailAlreadyRegistered
+            }
+
+            // Clear any stale cached session before signup
+            try { supabase.auth.signOut() } catch (_: Exception) {}
+            
+            val langCode = when (currentLanguage.value) {
+                AppLanguage.ENGLISH -> "en"
+                AppLanguage.JAPANESE -> "ja"
+                AppLanguage.CHINESE -> "zh"
+            }
+            supabase.auth.signUpWith(Email, redirectUrl = "https://bluesky1229gh.github.io/RepositoryOfArcheryLog/?lang=$langCode") {
                 this.email = email
                 this.password = passwordHash
             }
             val user = supabase.auth.currentUserOrNull()
             
+            android.util.Log.d("ArcherySignup", "user is null? ${user == null}")
+            if (user != null) {
+                android.util.Log.d("ArcherySignup", "user.id=${user.id}, confirmedAt=${user.confirmedAt}, emailConfirmedAt=${user.emailConfirmedAt}")
+            }
+            
             if (user == null) {
                 // Email verification is enabled: signUpWith succeeded but no session was created.
-                // This is NORMAL - the user must verify their email before logging in.
-                android.util.Log.d("ArcherySignup", "Signup successful, email verification pending for: $email")
+                android.util.Log.d("ArcherySignup", "Branch: user is null -> verification pending")
                 return l10n.verificationSentHint
             }
             
             val userId = user.id
             
             // Check if user exists but email not yet confirmed
-            if (user.confirmedAt == null) {
+            // Use BOTH confirmedAt and emailConfirmedAt for safety
+            if (user.confirmedAt == null || user.emailConfirmedAt == null) {
+                android.util.Log.d("ArcherySignup", "Branch: email not confirmed -> verification pending")
                 try {
                     val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
                     supabase.postgrest.from("users").upsert(newUser)
@@ -368,9 +398,12 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 } catch (e: Exception) {
                     android.util.Log.e("ArcherySignup", "Pre-create profile failed: ${e.message}")
                 }
+                // Sign out the unverified session to prevent auto-login
+                try { supabase.auth.signOut() } catch (_: Exception) {}
                 return l10n.verificationSentHint
             }
 
+            android.util.Log.d("ArcherySignup", "Branch: auto-confirm -> login directly")
             // Auto-confirm is enabled: user is ready to use immediately
             val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
             supabase.postgrest.from("users").upsert(newUser)
@@ -382,9 +415,10 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             e.printStackTrace()
             val msg = e.localizedMessage ?: ""
             when {
-                msg.contains("invalid_credentials", ignoreCase = true) -> "邮箱或密码错误"
-                msg.contains("User already exists", ignoreCase = true) -> "该邮箱已被注册"
-                else -> "操作失败，请检查网络后再试"
+                msg.contains("rate limit exceeded", ignoreCase = true) || msg.contains("Too many requests", ignoreCase = true) -> l10n.rateLimitExceeded
+                msg.contains("invalid_credentials", ignoreCase = true) -> l10n.invalidCredentials
+                msg.contains("User already exists", ignoreCase = true) -> l10n.emailAlreadyRegistered
+                else -> l10n.operationFailed
             }
         }
     }
@@ -410,12 +444,12 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                         .decodeSingleOrNull<User>()
                 } catch (e: Exception) {
                     android.util.Log.e("ArcheryLogin", "Username lookup network/permission error: ${e.message}")
-                    return "网络异常或服务器权限验证失败，请尝试使用邮箱登录"
+                    return l10n.loginNetworkError
                 }
                 
                 if (cloudUser == null || cloudUser.email == null) {
                     android.util.Log.e("ArcheryLogin", "Username '$identifier' not found in cloud 'users' table")
-                    return "用户名不存在，请检查拼写或尝试使用邮箱登录"
+                    return l10n.loginUserNotFound
                 }
                 finalEmail = cloudUser.email!!
                 android.util.Log.e("ArcheryLogin", "Username '$identifier' resolved to email: $finalEmail")
@@ -425,8 +459,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 this.email = finalEmail
                 this.password = passwordHash
             }
-            val userId = supabase.auth.currentUserOrNull()?.id ?: return "登录失败：未获取到 ID"
-            
+            val userId = supabase.auth.currentUserOrNull()?.id ?: return l10n.loginNoIdError
             // MANDATORY OVERWRITE: Always ensure the local profile has the correct verified email from Auth
             val cloudProfile = try {
                 supabase.postgrest.from("users")
@@ -459,8 +492,8 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             when {
                 msg.contains("Email not confirmed", ignoreCase = true) || 
                 msg.contains("Email not verified", ignoreCase = true) -> l10n.emailNotVerifiedError
-                msg.contains("invalid_credentials", ignoreCase = true) -> "标识符（邮箱/用户名）或密码错误"
-                else -> "登录失败，请检查网络或账号密码"
+                msg.contains("invalid_credentials", ignoreCase = true) -> l10n.invalidCredentials
+                else -> l10n.loginFailed
             }
         }
     }
@@ -740,13 +773,32 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         if (userId.isBlank()) return
         viewModelScope.launch {
             try {
+                android.util.Log.d("DeleteAccount", "Starting account deletion for userId: $userId")
+                // 1. Call server-side function to delete user from Supabase Auth & users table
+                supabase.postgrest.rpc("delete_own_account")
+                android.util.Log.d("DeleteAccount", "RPC delete_own_account succeeded!")
+                // 2. Clear the local cached session
+                try { supabase.auth.signOut() } catch (_: Exception) {}
+                // 3. Clean up local data
                 repository.deleteUser(userId)
-                supabase.auth.signOut()
                 _currentUserId.value = ""
                 prefs.edit().putString("current_user_uuid", "").apply()
                 finishSession()
                 onSuccess()
-            } catch (e: Exception) {}
+            } catch (e: Exception) {
+                android.util.Log.e("DeleteAccount", "RPC FAILED: ${e.javaClass.simpleName}: ${e.message}", e)
+                // If RPC fails, still try to sign out and clean up locally
+                try {
+                    supabase.auth.signOut()
+                    repository.deleteUser(userId)
+                    _currentUserId.value = ""
+                    prefs.edit().putString("current_user_uuid", "").apply()
+                    finishSession()
+                    onSuccess()
+                } catch (e2: Exception) {
+                    android.util.Log.e("DeleteAccount", "Fallback also failed: ${e2.message}")
+                }
+            }
         }
     }
 
