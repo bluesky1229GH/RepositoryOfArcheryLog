@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Archery Log - 邮箱验证成功</title>
+    <title id="page-title">Archery Log - 邮箱验证成功</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -223,25 +223,76 @@
                 <svg viewBox="0 0 24 24"><polyline points="6,12 10,16 18,8"/></svg>
             </div>
         </div>
-        <h1>邮箱验证成功</h1>
-        <p class="subtitle">您的邮箱已成功验证，<br>现在可以登录 Archery Log 了</p>
+        <h1 id="title">邮箱验证成功</h1>
+        <p class="subtitle" id="subtitle">您的邮箱已成功验证，<br>现在可以登录 Archery Log 了</p>
 
         <div class="card">
             <div class="step done">
                 <div class="step-num">✓</div>
-                <span>邮箱验证完成</span>
+                <span id="step1">邮箱验证完成</span>
             </div>
             <div class="step">
                 <div class="step-num">2</div>
-                <span>返回 Archery Log App</span>
+                <span id="step2">返回 Archery Log App</span>
             </div>
             <div class="step">
                 <div class="step-num">3</div>
-                <span>使用邮箱和密码登录</span>
+                <span id="step3">使用邮箱和密码登录</span>
             </div>
         </div>
 
-        <p class="app-name">🏹 <span>Archery Log</span> · 射箭记录助手</p>
+        <p class="app-name">🏹 <span>Archery Log</span> · <span id="app-desc">射箭记录助手</span></p>
     </div>
+    
+    <script>
+        const translations = {
+            'en': {
+                'page-title': 'Archery Log - Email Verified',
+                'title': 'Email Verified Successfully',
+                'subtitle': 'Your email has been successfully verified.<br>You can now log in to Archery Log.',
+                'step1': 'Email verification complete',
+                'step2': 'Return to Archery Log App',
+                'step3': 'Log in with email and password',
+                'app-desc': 'Archery Tracking Assistant'
+            },
+            'ja': {
+                'page-title': 'Archery Log - メール認証完了',
+                'title': 'メール認証完了',
+                'subtitle': 'メールアドレスの認証が完了しました。<br>Archery Logにログインできるようになりました。',
+                'step1': 'メール認証完了',
+                'step2': 'Archery Log アプリに戻る',
+                'step3': 'メールアドレスとパスワードでログイン',
+                'app-desc': 'アーチェリー記録アプリ'
+            },
+            'zh': {
+                'page-title': 'Archery Log - 邮箱验证成功',
+                'title': '邮箱验证成功',
+                'subtitle': '您的邮箱已成功验证，<br>现在可以登录 Archery Log 了',
+                'step1': '邮箱验证完成',
+                'step2': '返回 Archery Log App',
+                'step3': '使用邮箱和密码登录',
+                'app-desc': '射箭记录助手'
+            }
+        };
+
+        const browserLang = navigator.language || navigator.userLanguage || 'en';
+        let langCode = 'en'; 
+        
+        if (browserLang.startsWith('zh')) {
+            langCode = 'zh';
+        } else if (browserLang.startsWith('ja')) {
+            langCode = 'ja';
+        }
+
+        const t = translations[langCode];
+        
+        document.getElementById('page-title').textContent = t['page-title'];
+        document.getElementById('title').textContent = t['title'];
+        document.getElementById('subtitle').innerHTML = t['subtitle'];
+        document.getElementById('step1').textContent = t['step1'];
+        document.getElementById('step2').textContent = t['step2'];
+        document.getElementById('step3').textContent = t['step3'];
+        document.getElementById('app-desc').textContent = t['app-desc'];
+    </script>
 </body>
 </html>
