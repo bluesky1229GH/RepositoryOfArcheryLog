@@ -52,62 +52,82 @@
             z-index: 1;
         }
 
-        /* Checkmark animation */
-        .check-circle {
-            width: 96px;
-            height: 96px;
+        /* Logo */
+        .logo-container {
+            width: 120px;
+            height: 120px;
             margin: 0 auto 2rem;
             position: relative;
+            animation: fadeIn 0.6s ease 0.2s forwards;
+            opacity: 0;
         }
 
-        .check-circle svg {
+        .logo-container::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: conic-gradient(#22c55e, #4ade80, #22c55e);
+            animation: spin 3s linear infinite;
+            opacity: 0.6;
+        }
+
+        .logo-container::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: conic-gradient(#22c55e, #4ade80, #22c55e);
+            filter: blur(12px);
+            animation: spin 3s linear infinite;
+            opacity: 0.3;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .logo-img {
             width: 100%;
             height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            position: relative;
+            z-index: 1;
+            border: 3px solid #1a1a1a;
         }
 
-        .circle-bg {
+        /* Checkmark badge */
+        .check-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 36px;
+            height: 36px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            border: 3px solid #0a0a0a;
+            opacity: 0;
+            transform: scale(0);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.8s forwards;
+        }
+
+        .check-badge svg {
+            width: 18px;
+            height: 18px;
             fill: none;
-            stroke: #1a1a1a;
+            stroke: #000;
             stroke-width: 3;
-        }
-
-        .circle-progress {
-            fill: none;
-            stroke: #22c55e;
-            stroke-width: 3;
-            stroke-linecap: round;
-            stroke-dasharray: 283;
-            stroke-dashoffset: 283;
-            animation: drawCircle 0.8s ease-out 0.2s forwards;
-            filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.4));
-        }
-
-        .checkmark {
-            fill: none;
-            stroke: #22c55e;
-            stroke-width: 4;
             stroke-linecap: round;
             stroke-linejoin: round;
-            stroke-dasharray: 50;
-            stroke-dashoffset: 50;
-            animation: drawCheck 0.4s ease-out 0.9s forwards;
-            filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.5));
         }
 
-        @keyframes drawCircle {
-            to { stroke-dashoffset: 0; }
-        }
-
-        @keyframes drawCheck {
-            to { stroke-dashoffset: 0; }
-        }
-
-        /* Target icon */
-        .target-icon {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-            opacity: 0;
-            animation: fadeIn 0.5s ease 1.2s forwards;
+        @keyframes popIn {
+            to { opacity: 1; transform: scale(1); }
         }
 
         h1 {
@@ -197,16 +217,12 @@
 <body>
     <div class="bg-glow"></div>
     <div class="container">
-        <div class="check-circle">
-            <svg viewBox="0 0 96 96">
-                <circle class="circle-bg" cx="48" cy="48" r="44" />
-                <circle class="circle-progress" cx="48" cy="48" r="44" 
-                    transform="rotate(-90 48 48)" />
-                <polyline class="checkmark" points="30,50 42,62 66,36" />
-            </svg>
+        <div class="logo-container">
+            <img src="logo.jpg" alt="Archery Log" class="logo-img">
+            <div class="check-badge">
+                <svg viewBox="0 0 24 24"><polyline points="6,12 10,16 18,8"/></svg>
+            </div>
         </div>
-
-        <div class="target-icon">🎯</div>
         <h1>邮箱验证成功</h1>
         <p class="subtitle">您的邮箱已成功验证，<br>现在可以登录 Archery Log 了</p>
 
