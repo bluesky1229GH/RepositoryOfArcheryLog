@@ -242,6 +242,8 @@
         </div>
 
         <p class="app-name">🏹 <span>Archery Log</span> · <span id="app-desc">射箭记录助手</span></p>
+        <div id="debug-info" style="font-size: 10px; color: #333; margin-top: 20px; opacity: 0.5;"></div>
+    </div>
     </div>
     
     <script>
@@ -314,6 +316,9 @@
             
             // 设置 HTML 语言标签
             document.documentElement.lang = langCode === 'zh' ? 'zh-CN' : (langCode === 'ja' ? 'ja' : 'en');
+
+            // 调试信息显示
+            document.getElementById('debug-info').textContent = `Debug: Browser=${browserLang}, Query=${queryLang}, Final=${langCode}`;
         }
 
         initLanguage();
