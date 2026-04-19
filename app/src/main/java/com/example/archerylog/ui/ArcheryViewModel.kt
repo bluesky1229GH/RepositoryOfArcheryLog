@@ -18,6 +18,8 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.OtpType
+import com.example.archerylog.ui.utils.L10n
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -340,20 +342,38 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
 
     // 5. Supabase Auth Integration
     suspend fun signup(email: String, passwordHash: String): String? {
+        val l10n = L10n(currentLanguage.value)
         return try {
             supabase.auth.signUpWith(Email) {
                 this.email = email
                 this.password = passwordHash
             }
-            val userId = supabase.auth.currentUserOrNull()?.id ?: return "Registration failed: No user ID returned"
+            val user = supabase.auth.currentUserOrNull()
             
-            // 1. Create Profile Data
+            if (user == null) {
+                // Email verification is enabled: signUpWith succeeded but no session was created.
+                // This is NORMAL - the user must verify their email before logging in.
+                android.util.Log.d("ArcherySignup", "Signup successful, email verification pending for: $email")
+                return l10n.verificationSentHint
+            }
+            
+            val userId = user.id
+            
+            // Check if user exists but email not yet confirmed
+            if (user.confirmedAt == null) {
+                try {
+                    val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
+                    supabase.postgrest.from("users").upsert(newUser)
+                    repository.insertUser(newUser)
+                } catch (e: Exception) {
+                    android.util.Log.e("ArcherySignup", "Pre-create profile failed: ${e.message}")
+                }
+                return l10n.verificationSentHint
+            }
+
+            // Auto-confirm is enabled: user is ready to use immediately
             val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
-            
-            // 2. Push to Cloud (Crucial for username login later)
             supabase.postgrest.from("users").upsert(newUser)
-            
-            // 3. Save locally
             repository.insertUser(newUser)
             
             loginInternal(userId)
@@ -370,6 +390,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     suspend fun login(identifier: String, passwordHash: String): String? {
+        val l10n = L10n(currentLanguage.value)
         return try { 
             var finalEmail = identifier
             
@@ -435,11 +456,23 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         } catch (e: Exception) {
             e.printStackTrace()
             val msg = e.localizedMessage ?: ""
-            if (msg.contains("invalid_credentials", ignoreCase = true)) {
-                "标识符（邮箱/用户名）或密码错误"
-            } else {
-                "登录失败，请检查网络或账号密码"
+            when {
+                msg.contains("Email not confirmed", ignoreCase = true) || 
+                msg.contains("Email not verified", ignoreCase = true) -> l10n.emailNotVerifiedError
+                msg.contains("invalid_credentials", ignoreCase = true) -> "标识符（邮箱/用户名）或密码错误"
+                else -> "登录失败，请检查网络或账号密码"
             }
+        }
+    }
+
+    suspend fun resendVerificationEmail(email: String): String? {
+        val l10n = L10n(currentLanguage.value)
+        return try {
+            supabase.auth.resendEmail(type = OtpType.Email.SIGNUP, email = email)
+            l10n.resendSuccess
+        } catch (e: Exception) {
+            e.printStackTrace()
+            "发送失败：${e.localizedMessage}"
         }
     }
 

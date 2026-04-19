@@ -65,11 +65,43 @@ fun LoginScreen(
         )
 
         if (error != null) {
+            val isVerificationError = error == l10n.emailNotVerifiedError || error == l10n.verificationSentHint
             Text(
                 text = error!!,
-                color = MaterialTheme.colorScheme.error,
+                color = if (error == l10n.verificationSentHint) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 8.dp)
             )
+
+            if (isVerificationError && !isSignUp) {
+                var resendLoading by remember { mutableStateOf(false) }
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            resendLoading = true
+                            // If we login by username, we might need the email to resend.
+                            // But for simplicity, we assume identifier is email if they are resending.
+                            // Supabase resend requires email.
+                            val msg = viewModel.resendVerificationEmail(identifier)
+                            error = msg
+                            resendLoading = false
+                        }
+                    },
+                    enabled = !resendLoading && identifier.contains("@")
+                ) {
+                    Text(
+                        text = if (resendLoading) "..." else l10n.resendEmailButton,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                
+                if (!identifier.contains("@")) {
+                    Text(
+                        text = "(请使用注册邮箱以启用重发功能)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

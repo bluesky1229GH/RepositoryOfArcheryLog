@@ -448,6 +448,28 @@ class L10n(val language: AppLanguage) {
         AppLanguage.CHINESE -> "注册失败，用户名可能已被占用。"
     }
 
+    // Email Verification
+    val verificationSentHint = when(language) {
+        AppLanguage.ENGLISH -> "Verification link sent! Please check your inbox before logging in."
+        AppLanguage.JAPANESE -> "認証メールを送信しました！ログイン前にメールを確認してください。"
+        AppLanguage.CHINESE -> "验证邮件已发送！请先前往邮箱点击链接验证，然后再尝试登录。"
+    }
+    val emailNotVerifiedError = when(language) {
+        AppLanguage.ENGLISH -> "Email not verified. Please check your inbox or resend."
+        AppLanguage.JAPANESE -> "メールアドレスが未認証です。メールを確認するか、再送してください。"
+        AppLanguage.CHINESE -> "您的邮箱尚未验证。请检查收件箱或尝试重新发送验证邮件。"
+    }
+    val resendEmailButton = when(language) {
+        AppLanguage.ENGLISH -> "Resend Verification Email"
+        AppLanguage.JAPANESE -> "認証メールを再送する"
+        AppLanguage.CHINESE -> "重新发送验证邮件"
+    }
+    val resendSuccess = when(language) {
+        AppLanguage.ENGLISH -> "Resend successful! Check your inbox."
+        AppLanguage.JAPANESE -> "再送が完了しました！メールを確認してください。"
+        AppLanguage.CHINESE -> "发送成功！请查看您的邮箱。"
+    }
+
     // Log Session
     val end = when(language) {
         AppLanguage.ENGLISH -> "End"
