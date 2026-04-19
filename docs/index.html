@@ -261,7 +261,7 @@
                 'subtitle': 'メールアドレスの認証が完了しました。<br>Archery Logにログインできるようになりました。',
                 'step1': 'メール認証完了',
                 'step2': 'Archery Log アプリに戻る',
-                'step3': 'メールアドレスとパスワードでログイン',
+                'step3': 'メールアドレスと密码でログイン',
                 'app-desc': 'アーチェリー記録アプリ'
             },
             'zh': {
@@ -275,28 +275,48 @@
             }
         };
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const queryLang = urlParams.get('lang');
-        const browserLang = navigator.language || navigator.userLanguage || 'en';
-        let langCode = 'en'; 
-        
-        if (queryLang && (queryLang === 'zh' || queryLang === 'ja' || queryLang === 'en')) {
-            langCode = queryLang;
-        } else if (browserLang.startsWith('zh')) {
-            langCode = 'zh';
-        } else if (browserLang.startsWith('ja')) {
-            langCode = 'ja';
+        function initLanguage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryLang = urlParams.get('lang');
+            // 获取浏览器语言并转换为小写，处理 zh-CN / zh-tw 等
+            const browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+            
+            console.log('Detected Browser Language:', browserLang);
+            console.log('URL Query Lang:', queryLang);
+
+            let langCode = 'en'; // 默认英语
+
+            // 1. 优先检查 URL 参数
+            if (queryLang) {
+                const cleanQuery = queryLang.toLowerCase();
+                if (cleanQuery.startsWith('zh')) langCode = 'zh';
+                else if (cleanQuery.startsWith('ja')) langCode = 'ja';
+                else if (cleanQuery.startsWith('en')) langCode = 'en';
+            } 
+            // 2. 其次匹配浏览器语言
+            else if (browserLang.startsWith('zh')) {
+                langCode = 'zh';
+            } else if (browserLang.startsWith('ja')) {
+                langCode = 'ja';
+            }
+
+            console.log('Final Selected Language Code:', langCode);
+
+            const t = translations[langCode];
+            
+            document.getElementById('page-title').textContent = t['page-title'];
+            document.getElementById('title').textContent = t['title'];
+            document.getElementById('subtitle').innerHTML = t['subtitle'];
+            document.getElementById('step1').textContent = t['step1'];
+            document.getElementById('step2').textContent = t['step2'];
+            document.getElementById('step3').textContent = t['step3'];
+            document.getElementById('app-desc').textContent = t['app-desc'];
+            
+            // 设置 HTML 语言标签
+            document.documentElement.lang = langCode === 'zh' ? 'zh-CN' : (langCode === 'ja' ? 'ja' : 'en');
         }
 
-        const t = translations[langCode];
-        
-        document.getElementById('page-title').textContent = t['page-title'];
-        document.getElementById('title').textContent = t['title'];
-        document.getElementById('subtitle').innerHTML = t['subtitle'];
-        document.getElementById('step1').textContent = t['step1'];
-        document.getElementById('step2').textContent = t['step2'];
-        document.getElementById('step3').textContent = t['step3'];
-        document.getElementById('app-desc').textContent = t['app-desc'];
+        initLanguage();
     </script>
 </body>
 </html>
