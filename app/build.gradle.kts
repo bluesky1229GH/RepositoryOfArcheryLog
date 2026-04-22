@@ -99,8 +99,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     
-    // Gemini AI (Upgraded to handle 1.5-flash stability)
-    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    // Gemini AI: Using REST API directly (no SDK dependency needed)
+    // This avoids the Ktor 2.x vs 3.x conflict with the deprecated generativeai SDK
 
     // Supabase (Official 3.x Stable)
     implementation(platform("io.github.jan-tennert.supabase:bom:3.0.1"))

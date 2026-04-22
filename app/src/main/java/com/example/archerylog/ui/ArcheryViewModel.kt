@@ -11,7 +11,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.archerylog.data.*
 import com.example.archerylog.domain.ArcheryRepository
 import com.example.archerylog.ui.utils.AppLanguage
-import com.google.ai.client.generativeai.GenerativeModel
+import org.json.JSONObject
+import org.json.JSONArray
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.postgrest
@@ -52,12 +57,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private val generativeModel by lazy {
-        GenerativeModel(
-            modelName = "gemini-1.5-flash",
-            apiKey = com.example.archerylog.BuildConfig.GEMINI_API_KEY
-        )
-    }
+    private val geminiApiKey = com.example.archerylog.BuildConfig.GEMINI_API_KEY
 
     private val _aiResponse = MutableStateFlow<String?>(null)
     val aiResponse: StateFlow<String?> = _aiResponse.asStateFlow()
@@ -71,14 +71,58 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             _isAiLoading.value = true
             try {
                 val prompt = "Context: Archery Coach. \nQuestion: $question"
-                val response = generativeModel.generateContent(prompt)
-                _aiResponse.value = response.text ?: "Empty response"
+                val result = withContext(Dispatchers.IO) {
+                    callGeminiApi(prompt)
+                }
+                _aiResponse.value = result
             } catch (t: Throwable) {
                 _aiResponse.value = "Error: ${t.localizedMessage}"
             } finally {
                 _isAiLoading.value = false
             }
         }
+    }
+
+    private fun callGeminiApi(prompt: String): String {
+        val url = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$geminiApiKey")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        connection.setRequestProperty("Content-Type", "application/json")
+        connection.doOutput = true
+        connection.connectTimeout = 30000
+        connection.readTimeout = 60000
+
+        val requestBody = JSONObject().apply {
+            put("contents", JSONArray().apply {
+                put(JSONObject().apply {
+                    put("parts", JSONArray().apply {
+                        put(JSONObject().apply {
+                            put("text", prompt)
+                        })
+                    })
+                })
+            })
+        }
+
+        connection.outputStream.use { os ->
+            os.write(requestBody.toString().toByteArray())
+        }
+
+        val responseCode = connection.responseCode
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            val errorStream = connection.errorStream?.bufferedReader()?.readText() ?: "Unknown error"
+            throw Exception("API Error ($responseCode): $errorStream")
+        }
+
+        val responseText = connection.inputStream.bufferedReader().readText()
+        val jsonResponse = JSONObject(responseText)
+        return jsonResponse
+            .getJSONArray("candidates")
+            .getJSONObject(0)
+            .getJSONObject("content")
+            .getJSONArray("parts")
+            .getJSONObject(0)
+            .getString("text")
     }
 
     fun clearAiResponse() { _aiResponse.value = null }
