@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.archerylog.data.*
 import com.example.archerylog.domain.ArcheryRepository
 import com.example.archerylog.ui.utils.AppLanguage
+import com.example.archerylog.utils.AvatarCacheManager
 import org.json.JSONObject
 import org.json.JSONArray
 import java.net.HttpURLConnection
@@ -637,6 +638,13 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                     if (cloudUser != null) {
                         android.util.Log.e("ArcherySync", "User profile fetched: ${cloudUser.username}")
                         repository.insertUser(cloudUser)
+                        
+                        // 预热头像：提前下载到本地硬盘缓存
+                        cloudUser.avatarUri?.let { uri ->
+                            viewModelScope.launch {
+                                AvatarCacheManager.downloadToCache(getApplication(), uri)
+                            }
+                        }
                     } else {
                         // FALLBACK: If user profile record doesn't exist in 'users' table, 
                         // try to reconstruct from Auth session

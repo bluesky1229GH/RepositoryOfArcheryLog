@@ -31,6 +31,8 @@ import java.net.URL
 fun ProfileAvatar(uri: String?, size: Dp, modifier: Modifier = Modifier) {
     var bitmapState by remember(uri) { mutableStateOf<Bitmap?>(null) }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     LaunchedEffect(uri) {
         if (uri.isNullOrBlank()) {
             bitmapState = null
@@ -39,17 +41,23 @@ fun ProfileAvatar(uri: String?, size: Dp, modifier: Modifier = Modifier) {
         
         withContext(Dispatchers.IO) {
             try {
-                val bitmap = if (uri.startsWith("file://")) {
-                    BitmapFactory.decodeFile(uri.removePrefix("file://"))
+                if (uri.startsWith("file://")) {
+                    bitmapState = BitmapFactory.decodeFile(uri.removePrefix("file://"))
                 } else if (uri.startsWith("http")) {
-                    val connection = URL(uri).openConnection()
-                    connection.connectTimeout = 5000
-                    connection.readTimeout = 5000
-                    val input = connection.getInputStream()
-                    BitmapFactory.decodeStream(input)
-                } else null
-                
-                bitmapState = bitmap
+                    // 1. 尝试从本地缓存读取
+                    val cacheFile = com.example.archerylog.utils.AvatarCacheManager.getCachedFile(context, uri)
+                    if (cacheFile.exists()) {
+                        bitmapState = BitmapFactory.decodeFile(cacheFile.absolutePath)
+                    } else {
+                        // 2. 本地没有，则下载并存入缓存
+                        val downloadedFile = com.example.archerylog.utils.AvatarCacheManager.downloadToCache(context, uri)
+                        if (downloadedFile != null) {
+                            bitmapState = BitmapFactory.decodeFile(downloadedFile.absolutePath)
+                        }
+                    }
+                } else {
+                    bitmapState = null
+                }
             } catch (e: Exception) {
                 bitmapState = null
             }
