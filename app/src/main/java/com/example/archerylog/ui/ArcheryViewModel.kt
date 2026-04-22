@@ -292,6 +292,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             try { supabase.postgrest.from("ends").insert(end) } catch (e: Exception) {}
             _currentEndId.value = end.id
             _currentEndNumber.value = endNum
+            _showEndCompletionDialog.value = false
         } catch (e: Exception) {
             e.printStackTrace()
             // If the session was deleted during this call, finish everything safely

@@ -105,19 +105,6 @@ fun AddSessionScreen(
         }
     }
 
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.confirmEndAndContinue() },
-            properties = androidx.compose.ui.window.DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false),
-            title = { Text(l10n.addRecordTitle) },
-            text = { Text(l10n.bufferMessage) },
-            confirmButton = {
-                Button(onClick = { viewModel.confirmEndAndContinue() }) {
-                    Text("OK")
-                }
-            }
-        )
-    }
 
     if (showAbandonConfirm) {
         AlertDialog(
@@ -567,6 +554,40 @@ fun AddSessionScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                            // Smart Hint Area (Replaces the Dialog)
+                            AnimatedVisibility(
+                                visible = showDialog,
+                                enter = fadeIn() + expandVertically(),
+                                exit = fadeOut() + shrinkVertically()
+                            ) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f)
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Check, 
+                                            contentDescription = null, 
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(Modifier.width(12.dp))
+                                        Text(
+                                            text = if (currentEndNumber >= 6) l10n.lastEndNotice else l10n.bufferMessage,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            lineHeight = 20.sp
+                                        )
+                                    }
+                                }
+                            }
+
                             // Quick Controls
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -596,15 +617,11 @@ fun AddSessionScreen(
 
                                 Button(
                                     onClick = { 
-                                        if (currentEndNumber >= 6) {
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar(l10n.lastEndNotice)
-                                            }
-                                        } else {
+                                        if (currentEndNumber < 6) {
                                             viewModel.moveToNextEnd()
                                         }
                                     },
-                                    enabled = !isCreatingSession && currentEndShots.size >= 6,
+                                    enabled = !isCreatingSession && currentEndShots.size >= 6 && currentEndNumber < 6,
                                     modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFF4CAF50),

@@ -574,9 +574,9 @@ class L10n(val language: AppLanguage) {
     }
 
     val lastEndNotice = when(language) {
-        AppLanguage.ENGLISH -> "This is the last end. Please press [Finish] to end the session."
-        AppLanguage.JAPANESE -> "これが最後のエンドです。終了したら「記録完了」をクリックしてください。"
-        AppLanguage.CHINESE -> "这已经是最后一组，打完本组后请点击“记录完成”以关闭。"
+        AppLanguage.ENGLISH -> "This is the last end.\nTo modify, tap the BLACK 'Undo' button.\nTo finish, tap the RED 'Finish' button below."
+        AppLanguage.JAPANESE -> "これが最後のエンドです。\n修正するには黒の「取り消し」を、\n終了するには下の赤色「記録完了」ボタンをタップしてください。"
+        AppLanguage.CHINESE -> "这已经是最后一组。\n如需修改，请点击左下角黑色的“撤销”按钮；\n如需结束并保存，请点击下方的红色“记录完成”按钮。"
     }
 
     val saveToFavorites = when(language) {
