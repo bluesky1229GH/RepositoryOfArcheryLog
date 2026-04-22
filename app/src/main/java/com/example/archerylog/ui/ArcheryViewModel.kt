@@ -187,7 +187,24 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _currentLanguage = MutableStateFlow(
-        AppLanguage.valueOf(prefs.getString("current_language", AppLanguage.CHINESE.name) ?: AppLanguage.CHINESE.name)
+        run {
+            val savedLanguage = prefs.getString("current_language", null)
+            if (savedLanguage != null) {
+                try {
+                    AppLanguage.valueOf(savedLanguage)
+                } catch (e: Exception) {
+                    AppLanguage.ENGLISH
+                }
+            } else {
+                // 首次启动，根据系统语言自适应
+                val systemLanguage = java.util.Locale.getDefault().language
+                when {
+                    systemLanguage.startsWith("zh") -> AppLanguage.CHINESE
+                    systemLanguage.startsWith("ja") -> AppLanguage.JAPANESE
+                    else -> AppLanguage.ENGLISH // 默认使用英语作为全球通用语言
+                }
+            }
+        }
     )
     val currentLanguage = _currentLanguage.asStateFlow()
 
