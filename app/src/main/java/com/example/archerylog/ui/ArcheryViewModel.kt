@@ -32,6 +32,8 @@ import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -129,6 +131,9 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             .getJSONObject(0)
             .getString("text")
     }
+
+    // 互斥锁，防止高速点击造成的计分竞态冲突
+    private val scoreMutex = Mutex()
 
     fun clearAiResponse() { _aiResponse.value = null }
 
@@ -304,7 +309,9 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         val sessionId = _currentSessionId.value
         if (sessionId.isBlank()) return
         viewModelScope.launch {
-            startNewEnd(sessionId, _currentEndNumber.value + 1)
+            scoreMutex.withLock {
+                startNewEnd(sessionId, _currentEndNumber.value + 1)
+            }
         }
     }
 
@@ -313,43 +320,56 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         if (endId.isBlank()) return
         
         viewModelScope.launch {
-            try {
-                // Prevent adding more than 6 shots to any single end
-                if (repository.getShotsForEnd(endId).size >= 6) {
-                    _showEndCompletionDialog.value = true
-                    return@launch
+            scoreMutex.withLock {
+                try {
+                    // 同步检查当前组的箭数，防止超出 6 箭
+                    val currentShots = repository.getShotsForEnd(endId)
+                    if (currentShots.size >= 6) {
+                        _showEndCompletionDialog.value = true
+                        return@withLock
+                    }
+                    
+                    val numericValue = if (score == "X") 10 else score.toIntOrNull() ?: 0
+                    val shot = Shot(endId = endId, score = score, numericValue = numericValue, x = x, y = y)
+                    repository.insertShot(shot)
+                    
+                    // 将云端同步移出同步锁，并放入后台协程，确保不阻塞 UI
+                    viewModelScope.launch {
+                        try { supabase.postgrest.from("shots").insert(shot) } catch (e: Exception) {}
+                    }
+                    
+                    repository.addScoreToEnd(endId, numericValue)
+                    repository.modifySessionScore(_currentSessionId.value, numericValue, 1)
+                    
+                    // 再次检查，如果恰好满 6 箭，则显示提示卡片
+                    if (currentShots.size + 1 >= 6) {
+                        _showEndCompletionDialog.value = true
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                
-                val numericValue = if (score == "X") 10 else score.toIntOrNull() ?: 0
-                val shot = Shot(endId = endId, score = score, numericValue = numericValue, x = x, y = y)
-                repository.insertShot(shot)
-                try { supabase.postgrest.from("shots").insert(shot) } catch (e: Exception) {}
-                
-                repository.addScoreToEnd(endId, numericValue)
-                repository.modifySessionScore(_currentSessionId.value, numericValue, 1)
-                
-                if (repository.getShotsForEnd(endId).size >= 6) {
-                    _showEndCompletionDialog.value = true
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
     }
 
     fun undoLastShot() {
         viewModelScope.launch {
-            val shots = currentEndShots.value
-            if (shots.isEmpty()) return@launch
-            
-            val lastShot = shots.last()
-            repository.deleteShot(lastShot.id)
-            try { supabase.postgrest.from("shots").delete { filter { eq("id", lastShot.id) } } } catch (e: Exception) {}
-            
-            val scoreVal = if (lastShot.score == "X") 10 else lastShot.score.toIntOrNull() ?: 0
-            repository.addScoreToEnd(_currentEndId.value, -scoreVal)
-            repository.modifySessionScore(_currentSessionId.value, -scoreVal, -1)
-            _showEndCompletionDialog.value = false
+            scoreMutex.withLock {
+                val shots = currentEndShots.value
+                if (shots.isEmpty()) return@withLock
+                
+                val lastShot = shots.last()
+                repository.deleteShot(lastShot.id)
+                // 后台静默删除云端记录
+                viewModelScope.launch {
+                    try { supabase.postgrest.from("shots").delete { filter { eq("id", lastShot.id) } } } catch (e: Exception) {}
+                }
+                
+                val scoreVal = if (lastShot.score == "X") 10 else lastShot.score.toIntOrNull() ?: 0
+                repository.addScoreToEnd(_currentEndId.value, -scoreVal)
+                repository.modifySessionScore(_currentSessionId.value, -scoreVal, -1)
+                _showEndCompletionDialog.value = false
+            }
         }
     }
 

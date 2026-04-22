@@ -478,8 +478,9 @@ fun AddSessionScreen(
                             // Right side group: Score + Close Button
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(horizontalAlignment = Alignment.End) {
+                                    val totalScore = endsWithShots.sumOf { it.end.endTotalScore }
                                     Text(
-                                        text = "${l10n.totalScore}: $totalScore / ${totalShots * 10}",
+                                        text = "${l10n.totalScore}: $totalScore / ${currentEndNumber * 60}",
                                         style = MaterialTheme.typography.titleMedium,
                                         color = Color.White.copy(alpha = 0.9f)
                                     )
