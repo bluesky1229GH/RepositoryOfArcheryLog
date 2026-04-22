@@ -20,11 +20,15 @@ import kotlinx.coroutines.withContext
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.filter.*
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.OtpType
+import io.github.jan.supabase.storage.Storage
+import io.github.jan.supabase.storage.storage
 import com.example.archerylog.ui.utils.L10n
+import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -40,6 +44,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     ) {
         install(io.github.jan.supabase.postgrest.Postgrest)
         install(io.github.jan.supabase.auth.Auth)
+        install(io.github.jan.supabase.storage.Storage)
 
         defaultSerializer = io.github.jan.supabase.serializer.KotlinXSerializer(kotlinx.serialization.json.Json {
             ignoreUnknownKeys = true
@@ -734,10 +739,48 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     fun updateAvatarUri(newUri: String) {
         val userId = _currentUserId.value
         if (userId.isBlank()) return
+        
+        // 1. 立即更新本地状态，让 UI 实时反馈 (秒开预览)
+        _avatarUri.value = newUri
         viewModelScope.launch {
             repository.updateAvatarUri(userId, newUri)
-            _avatarUri.value = newUri
             prefs.edit().putString("user_avatar_uri", newUri).apply()
+            
+            try {
+                // 2. 如果是本地文件，尝试异步上传云端
+                if (newUri.startsWith("file://")) {
+                    val filePath = newUri.removePrefix("file://")
+                    val file = File(filePath)
+                    if (file.exists()) {
+                        val bytes = file.readBytes()
+                        val bucket = supabase.storage["avatars"]
+                        val fileName = "$userId.jpg"
+                        
+                        // 上传并覆盖旧头像
+                        bucket.upload(fileName, bytes) {
+                            upsert = true
+                        }
+                        
+                        // 获取公开 URL
+                        val publicUrl = bucket.publicUrl(fileName)
+                        
+                        // 3. 上传成功后，将云端 URL 同步到云端 users 表
+                        supabase.postgrest.from("users").update({
+                            set("avatar_uri", publicUrl)
+                        }) {
+                            filter { eq("id", userId) }
+                        }
+                        
+                        // 同时更新本地记录为云端 URL
+                        repository.updateAvatarUri(userId, publicUrl)
+                        _avatarUri.value = publicUrl
+                        prefs.edit().putString("user_avatar_uri", publicUrl).apply()
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ArcheryLog", "Cloud avatar sync failed!", e)
+                // 这里不需要 fallback，因为本地已经显示着 file:// 路径了
+            }
         }
     }
 

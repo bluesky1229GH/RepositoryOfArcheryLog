@@ -106,6 +106,7 @@ dependencies {
     implementation(platform("io.github.jan-tennert.supabase:bom:3.0.1"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt:3.0.1")
     implementation("io.github.jan-tennert.supabase:auth-kt:3.0.1")
+    implementation("io.github.jan-tennert.supabase:storage-kt:3.0.1")
     implementation("io.github.jan-tennert.supabase:realtime-kt:3.0.1")
 
     // Ktor & Serialization (Pinned to standard stable versions for Kotlin 2.0.20)
