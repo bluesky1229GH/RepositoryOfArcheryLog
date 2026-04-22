@@ -368,7 +368,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 AppLanguage.JAPANESE -> "ja"
                 AppLanguage.CHINESE -> "zh"
             }
-            supabase.auth.signUpWith(Email, redirectUrl = "https://bluesky1229gh.github.io/RepositoryOfArcheryLog/?lang=$langCode") {
+            supabase.auth.signUpWith(Email, redirectUrl = "https://auth.blueskylabs.app/?lang=$langCode") {
                 this.email = email
                 this.password = passwordHash
             }
