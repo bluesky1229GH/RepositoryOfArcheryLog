@@ -252,7 +252,7 @@ fun StatisticsScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(l10n.trendTitle, fontWeight = FontWeight.Bold)
-                                Text("${filteredSessionsCount}场", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
+                                Text("${filteredSessionsCount}${l10n.sessionsUnit}", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
                             }
                             Spacer(modifier = Modifier.height(16.dp))
                             EndTrendChart(

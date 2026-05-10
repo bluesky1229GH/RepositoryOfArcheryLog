@@ -2,7 +2,6 @@ package com.example.archerylog.ui
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -35,7 +34,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ArcheryViewModel(application: Application) : AndroidViewModel(application) {
@@ -56,15 +54,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         })
     }
     
-    // DEBUG: Check if we have valid cloud credentials
-    init {
-        val url = com.example.archerylog.BuildConfig.SUPABASE_URL
-        val key = com.example.archerylog.BuildConfig.SUPABASE_ANON_KEY
-        if (url.isBlank() || key.isBlank()) {
-            android.util.Log.e("ArcheryLog", "CRITICAL ERROR: Supabase URL or Key is blank! Check local.properties or gradle.properties")
-        }
-    }
-
     private val geminiApiKey = com.example.archerylog.BuildConfig.GEMINI_API_KEY
 
     private val _aiResponse = MutableStateFlow<String?>(null)
@@ -133,16 +122,13 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             .getString("text")
     }
 
-    // 互斥锁，防止高速点击造成的计分竞态冲突
     private val scoreMutex = Mutex()
 
     fun clearAiResponse() { _aiResponse.value = null }
 
-    // 2. Data Repository & Auth Flow
     private val repository: ArcheryRepository = ArcheryRepository(ArcheryDatabase.getDatabase(application).archeryDao())
     private val prefs = application.getSharedPreferences("archery_prefs", Context.MODE_PRIVATE)
 
-    // 1. User State
     private val _currentUserId = MutableStateFlow(prefs.getString("current_user_uuid", "") ?: "")
     val currentUserId = _currentUserId.asStateFlow()
 
@@ -150,15 +136,12 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     val isSyncing = _isSyncing.asStateFlow()
 
     init {
-        // Automatically sync on startup if logged in
         val userId = _currentUserId.value
         if (userId.isNotBlank()) {
             viewModelScope.launch {
                 try {
-                    // Just trigger sync. The sync logic now handles reconstruction if local profile is missing.
                     syncDataFromCloud(userId)
                 } catch (e: Exception) {
-                    android.util.Log.e("ArcheryLog", "Failed to initialize and sync on startup: ${e.message}")
                     e.printStackTrace()
                 }
             }
@@ -167,27 +150,22 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
 
     val isLoggedIn: Boolean get() = _currentUserId.value.isNotBlank()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val currentUser: StateFlow<User?> = _currentUserId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(null) else repository.getUserByIdFlow(id)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val allSessions: StateFlow<List<ArcherySession>> = _currentUserId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList()) else repository.getAllSessionsForUser(id)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val allEndsWithMetadata: StateFlow<List<EndWithMetadata>> = _currentUserId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList()) else repository.getAllEndsWithMetadataForUser(id)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val allShotsWithMetadata: StateFlow<List<ShotWithMetadata>> = _currentUserId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList()) else repository.getAllShotsWithMetadataForUser(id)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val aiFavorites: StateFlow<List<AiFavorite>> = _currentUserId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList()) else repository.getAiFavoritesForUser(id)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -202,12 +180,11 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                     AppLanguage.ENGLISH
                 }
             } else {
-                // 首次启动，根据系统语言自适应
                 val systemLanguage = java.util.Locale.getDefault().language
                 when {
                     systemLanguage.startsWith("zh") -> AppLanguage.CHINESE
                     systemLanguage.startsWith("ja") -> AppLanguage.JAPANESE
-                    else -> AppLanguage.ENGLISH // 默认使用英语作为全球通用语言
+                    else -> AppLanguage.ENGLISH
                 }
             }
         }
@@ -219,7 +196,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         prefs.edit().putString("current_language", language.name).apply()
     }
 
-    // 3. Active Session State
     var currentSessionTitle by mutableStateOf("")
     var currentVenue by mutableStateOf("")
     var currentDistance by mutableStateOf(30)
@@ -235,7 +211,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
 
     private val _currentSessionId = MutableStateFlow("")
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val currentSession: StateFlow<ArcherySession?> = _currentSessionId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(null) else repository.getSessionByIdFlow(id)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -246,7 +221,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     private val _currentEndNumber = MutableStateFlow(1)
     val currentEndNumber = _currentEndNumber.asStateFlow()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val currentEndShots: StateFlow<List<Shot>> = _currentEndId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList()) else flow {
             emitAll(repository.getEndsWithShotsForSession(_currentSessionId.value).map { list ->
@@ -255,7 +229,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val currentSessionEndsWithShots: StateFlow<List<EndWithShots>> = _currentSessionId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList()) else repository.getEndsWithShotsForSession(id)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -263,7 +236,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     private val _showEndCompletionDialog = MutableStateFlow(false)
     val showEndCompletionDialog = _showEndCompletionDialog.asStateFlow()
 
-    // 4. Scoring Engine (Unified Local + Supabase)
     fun startSessionManual() {
         val userId = _currentUserId.value
         if (userId.isBlank() || _isCreatingSession.value || _isSessionActive.value) return
@@ -280,7 +252,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 wind = currentWind
             )
             repository.insertSession(session)
-            // Async upload to Supabase
             try { supabase.postgrest.from("sessions").insert(session) } catch (e: Exception) {}
 
             _currentSessionId.value = session.id
@@ -301,7 +272,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             _showEndCompletionDialog.value = false
         } catch (e: Exception) {
             e.printStackTrace()
-            // If the session was deleted during this call, finish everything safely
             finishSession()
         }
     }
@@ -323,7 +293,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             scoreMutex.withLock {
                 try {
-                    // 同步检查当前组的箭数，防止超出 6 箭
                     val currentShots = repository.getShotsForEnd(endId)
                     if (currentShots.size >= 6) {
                         _showEndCompletionDialog.value = true
@@ -334,7 +303,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                     val shot = Shot(endId = endId, score = score, numericValue = numericValue, x = x, y = y)
                     repository.insertShot(shot)
                     
-                    // 将云端同步移出同步锁，并放入后台协程，确保不阻塞 UI
                     viewModelScope.launch {
                         try { supabase.postgrest.from("shots").insert(shot) } catch (e: Exception) {}
                     }
@@ -342,7 +310,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                     repository.addScoreToEnd(endId, numericValue)
                     repository.modifySessionScore(_currentSessionId.value, numericValue, 1)
                     
-                    // 再次检查，如果恰好满 6 箭，则显示提示卡片
                     if (currentShots.size + 1 >= 6) {
                         _showEndCompletionDialog.value = true
                     }
@@ -361,7 +328,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 
                 val lastShot = shots.last()
                 repository.deleteShot(lastShot.id)
-                // 后台静默删除云端记录
                 viewModelScope.launch {
                     try { supabase.postgrest.from("shots").delete { filter { eq("id", lastShot.id) } } } catch (e: Exception) {}
                 }
@@ -381,13 +347,11 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         val totalShots = currentSessionEndsWithShots.value.sumOf { it.shots.size }
         
         if (totalShots == 0) {
-            // If empty, treat as abandonment to clean up DB
             abandonSession()
             return
         }
 
         viewModelScope.launch {
-            // Cleanup: remove any 'ends' that have 0 shots (e.g. the ghost end 7)
             try {
                 repository.deleteEmptyEndsForSession(sessionId)
             } catch (e: Exception) {
@@ -410,7 +374,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     fun abandonSession() {
         val sessionId = _currentSessionId.value
         if (sessionId.isNotBlank()) {
-            // Immediately reset UI to avoid recursion and ensure responsiveness
             resetSessionState()
             
             viewModelScope.launch {
@@ -428,27 +391,22 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         _showEndCompletionDialog.value = false
     }
 
-    // 5. Supabase Auth Integration
     suspend fun signup(email: String, passwordHash: String): String? {
         val l10n = L10n(currentLanguage.value)
         return try {
-            // 0. 黑科技：在注册前绕过防枚举机制，先去后台强行查一次邮箱是否存在
             val params = kotlinx.serialization.json.buildJsonObject {
                 put("check_email", kotlinx.serialization.json.JsonPrimitive(email))
             }
             val isEmailRegistered = try {
                 val rpcResult = supabase.postgrest.rpc("check_email_exists", params).data
-                android.util.Log.d("ArcherySignup", "Check email RPC returned raw data: $rpcResult")
                 rpcResult.trim() == "true"
             } catch (e: Exception) {
-                android.util.Log.e("ArcherySignup", "Check email RPC failed: ${e.message}")
                 false
             }
             if (isEmailRegistered) {
                 return l10n.emailAlreadyRegistered
             }
 
-            // Clear any stale cached session before signup
             try { supabase.auth.signOut() } catch (_: Exception) {}
             
             val langCode = when (currentLanguage.value) {
@@ -462,43 +420,28 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             }
             val user = supabase.auth.currentUserOrNull()
             
-            android.util.Log.d("ArcherySignup", "user is null? ${user == null}")
-            if (user != null) {
-                android.util.Log.d("ArcherySignup", "user.id=${user.id}, confirmedAt=${user.confirmedAt}, emailConfirmedAt=${user.emailConfirmedAt}")
-            }
-            
             if (user == null) {
-                // Email verification is enabled: signUpWith succeeded but no session was created.
-                android.util.Log.d("ArcherySignup", "Branch: user is null -> verification pending")
                 return l10n.verificationSentHint
             }
             
             val userId = user.id
             
-            // Check if user exists but email not yet confirmed
-            // Use BOTH confirmedAt and emailConfirmedAt for safety
             if (user.confirmedAt == null || user.emailConfirmedAt == null) {
-                android.util.Log.d("ArcherySignup", "Branch: email not confirmed -> verification pending")
                 try {
                     val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
                     supabase.postgrest.from("users").upsert(newUser)
                     repository.insertUser(newUser)
-                } catch (e: Exception) {
-                    android.util.Log.e("ArcherySignup", "Pre-create profile failed: ${e.message}")
-                }
-                // Sign out the unverified session to prevent auto-login
+                } catch (e: Exception) {}
                 try { supabase.auth.signOut() } catch (_: Exception) {}
                 return l10n.verificationSentHint
             }
 
-            android.util.Log.d("ArcherySignup", "Branch: auto-confirm -> login directly")
-            // Auto-confirm is enabled: user is ready to use immediately
             val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
             supabase.postgrest.from("users").upsert(newUser)
             repository.insertUser(newUser)
             
             loginInternal(userId)
-            null // Success
+            null
         } catch (e: Exception) {
             e.printStackTrace()
             val msg = e.localizedMessage ?: ""
@@ -516,12 +459,10 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         return try { 
             var finalEmail = identifier
             
-            // If identifier is NOT an email, look up the email by username in Supabase
             if (!identifier.contains("@")) {
                 val cloudUser = try {
                     supabase.postgrest.from("users")
                         .select { 
-                            // Case-insensitive lookup (Postgres ilike equivalent)
                             filter { 
                                 or {
                                     eq("username", identifier.lowercase())
@@ -531,16 +472,13 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                         }
                         .decodeSingleOrNull<User>()
                 } catch (e: Exception) {
-                    android.util.Log.e("ArcheryLogin", "Username lookup network/permission error: ${e.message}")
                     return l10n.loginNetworkError
                 }
                 
                 if (cloudUser == null || cloudUser.email == null) {
-                    android.util.Log.e("ArcheryLogin", "Username '$identifier' not found in cloud 'users' table")
                     return l10n.loginUserNotFound
                 }
                 finalEmail = cloudUser.email!!
-                android.util.Log.e("ArcheryLogin", "Username '$identifier' resolved to email: $finalEmail")
             }
 
             supabase.auth.signInWith(Email) {
@@ -548,14 +486,13 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 this.password = passwordHash
             }
             val userId = supabase.auth.currentUserOrNull()?.id ?: return l10n.loginNoIdError
-            // MANDATORY OVERWRITE: Always ensure the local profile has the correct verified email from Auth
+            
             val cloudProfile = try {
                 supabase.postgrest.from("users")
                     .select { filter { eq("id", userId) } }
                     .decodeSingleOrNull<User>()
             } catch (e: Exception) { null }
             
-            // If cloud profile is missing, we use the verified email from the current session
             val finalUser = cloudProfile ?: User(
                 id = userId, 
                 email = finalEmail, 
@@ -563,17 +500,14 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             )
             repository.insertUser(finalUser)
             
-            // PUSH BACK TO CLOUD: If cloudProfile was missing, sync our data back up
             if (cloudProfile == null) {
                 try {
                     supabase.postgrest.from("users").upsert(finalUser)
-                } catch (e: Exception) {
-                    android.util.Log.e("ArcherySync", "Failed to push initial profile to cloud: ${e.message}")
-                }
+                } catch (e: Exception) {}
             }
             
             loginInternal(userId)
-            null // Success
+            null
         } catch (e: Exception) {
             e.printStackTrace()
             val msg = e.localizedMessage ?: ""
@@ -593,7 +527,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             l10n.resendSuccess
         } catch (e: Exception) {
             e.printStackTrace()
-            "发送失败：${e.localizedMessage}"
+            "Failed to send: ${e.localizedMessage}"
         }
     }
 
@@ -608,26 +542,9 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     private suspend fun syncDataFromCloud(userId: String) {
         if (_isSyncing.value) return
         _isSyncing.value = true
-        android.util.Log.e("ArcherySync", "!!! SYNC STARTED !!! userId: $userId")
         
-        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
             try {
-                // DEBUG PROBE: Fetch ANY session from cloud to check ID format
-                try {
-                    val anySession = supabase.postgrest.from("sessions").select {
-                        limit(1)
-                    }.decodeSingleOrNull<ArcherySession>()
-                    
-                    if (anySession != null) {
-                        android.util.Log.e("ArcherySync", "PROBE SUCCESS! Found a session in cloud with userId: ${anySession.userId}")
-                    } else {
-                        android.util.Log.e("ArcherySync", "PROBE: No sessions at all in the cloud table 'sessions'")
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("ArcherySync", "PROBE FAILED: ${e.message}")
-                }
-
-                // 0. Sync User Profile (With Auth session fallback)
                 try {
                     val cloudUser = try {
                         supabase.postgrest.from("users")
@@ -636,24 +553,17 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                     } catch (e: Exception) { null }
                     
                     if (cloudUser != null) {
-                        android.util.Log.e("ArcherySync", "User profile fetched: ${cloudUser.username}")
                         repository.insertUser(cloudUser)
-                        
-                        // 预热头像：提前下载到本地硬盘缓存
                         cloudUser.avatarUri?.let { uri ->
                             viewModelScope.launch {
                                 AvatarCacheManager.downloadToCache(getApplication(), uri)
                             }
                         }
                     } else {
-                        // FALLBACK: If user profile record doesn't exist in 'users' table, 
-                        // try to reconstruct from Auth session
-                        android.util.Log.e("ArcherySync", "Cloud profile missing in 'users' table, using session fallback")
                         val session = try { supabase.auth.retrieveUserForCurrentSession(updateSession = true) } catch (e: Exception) { null }
                         val email = session?.email
                         if (email != null) {
                             val local = repository.getUserById(userId)
-                            // Only update if current local is empty OR is a placeholder 'archer_xxxx'
                             if (local == null || local.username.startsWith("archer_")) {
                                 val repairedUser = User(id = userId, email = email, username = email.substringBefore("@"))
                                 repository.insertUser(repairedUser)
@@ -833,7 +743,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     suspend fun updateUsername(newUsername: String): String? {
         val userId = _currentUserId.value
         if (userId.isBlank()) return "Update failed: Not logged in"
-        if (newUsername.isBlank()) return "用户名不能为空"
+        if (newUsername.isBlank()) return "Username cannot be empty"
         
         return try {
             // 1. Cloud side uniqueness check
@@ -842,7 +752,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 .decodeSingleOrNull<User>()
             
             if (existing != null && existing.id != userId) {
-                return "该用户名已被占用"
+                return "This username is already taken"
             }
             
             // 2. Fetch current user to preserve email/avatar
@@ -858,7 +768,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             null // Success
         } catch (e: Exception) {
             e.printStackTrace()
-            "更新失败：${e.localizedMessage}"
+            "Update failed: ${e.localizedMessage}"
         }
     }
 

@@ -15,7 +15,7 @@ object AvatarCacheManager {
     private const val CACHE_DIR = "avatar_cache"
 
     /**
-     * 将 URL 转换为安全的唯一文件名
+     * Converts a URL to a safe, unique filename using MD5 hash.
      */
     private fun getCacheKey(url: String): String {
         return try {
@@ -27,7 +27,7 @@ object AvatarCacheManager {
     }
 
     /**
-     * 获取本地缓存文件路径
+     * Gets the local cache file path.
      */
     fun getCachedFile(context: Context, url: String): File {
         val dir = File(context.cacheDir, CACHE_DIR)
@@ -36,21 +36,21 @@ object AvatarCacheManager {
     }
 
     /**
-     * 检查是否有本地缓存
+     * Checks if a local cache exists for the given URL.
      */
     fun isCached(context: Context, url: String): Boolean {
         return getCachedFile(context, url).exists()
     }
 
     /**
-     * 下载并保存到本地（预热）
+     * Downloads and saves an image to the local cache (Pre-warming).
      */
     suspend fun downloadToCache(context: Context, url: String): File? = withContext(Dispatchers.IO) {
         if (url.isBlank() || !url.startsWith("http")) return@withContext null
         
         val cacheFile = getCachedFile(context, url)
         
-        // 如果文件已存在，直接返回
+        // If file already exists, return it directly
         if (cacheFile.exists()) return@withContext cacheFile
 
         try {

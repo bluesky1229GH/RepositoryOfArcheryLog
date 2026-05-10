@@ -44,12 +44,12 @@ fun ProfileAvatar(uri: String?, size: Dp, modifier: Modifier = Modifier) {
                 if (uri.startsWith("file://")) {
                     bitmapState = BitmapFactory.decodeFile(uri.removePrefix("file://"))
                 } else if (uri.startsWith("http")) {
-                    // 1. 尝试从本地缓存读取
+                    // 1. Try to read from local cache
                     val cacheFile = com.example.archerylog.utils.AvatarCacheManager.getCachedFile(context, uri)
                     if (cacheFile.exists()) {
                         bitmapState = BitmapFactory.decodeFile(cacheFile.absolutePath)
                     } else {
-                        // 2. 本地没有，则下载并存入缓存
+                        // 2. Not in local cache, download and save to cache
                         val downloadedFile = com.example.archerylog.utils.AvatarCacheManager.downloadToCache(context, uri)
                         if (downloadedFile != null) {
                             bitmapState = BitmapFactory.decodeFile(downloadedFile.absolutePath)

@@ -140,6 +140,11 @@ class L10n(val language: AppLanguage) {
         AppLanguage.JAPANESE -> "セッション（時系列）"
         AppLanguage.CHINESE -> "训练场次（按时间）"
     }
+    val sessionsUnit = when(language) {
+        AppLanguage.ENGLISH -> " Sessions"
+        AppLanguage.JAPANESE -> "回"
+        AppLanguage.CHINESE -> "场"
+    }
 
     // New Analysis Strings
     val ringDistribution = when(language) {

@@ -147,7 +147,6 @@ fun AddSessionScreen(
             )
         }
     ) { padding ->
-        // Setup Instructions Dialog
         if (showInstructions) {
             AlertDialog(
                 onDismissRequest = { showInstructions = false },

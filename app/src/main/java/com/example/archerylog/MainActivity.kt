@@ -113,7 +113,7 @@ fun ArcheryApp(viewModel: ArcheryViewModel) {
                             .height(64.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // All navigation actions set to launchSingleTop and restoreState for tab-like behavior
+                        // All navigation actions
                         Box(
                             modifier = Modifier.weight(1f).fillMaxHeight().clickable(
                                 interactionSource = remember { MutableInteractionSource() },
