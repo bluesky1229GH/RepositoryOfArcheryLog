@@ -56,8 +56,18 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("archerylog-release.jks")
+            storePassword = "archerylog123"
+            keyAlias = "archerylog-key"
+            keyPassword = "archerylog123"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
