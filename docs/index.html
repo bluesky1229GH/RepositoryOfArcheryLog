@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">Archery Log - 邮箱验证成功</title>
+    <!-- Prevent browser caching so changes in redirect logic are immediate -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <script>
+        (function() {
+            const hash = window.location.hash;
+            if (hash && (hash.includes('type=recovery') || hash.includes('access_token='))) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const lang = urlParams.get('lang') || '';
+                window.location.href = 'reset-password.html' + (lang ? '?lang=' + lang : '') + hash;
+            }
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
