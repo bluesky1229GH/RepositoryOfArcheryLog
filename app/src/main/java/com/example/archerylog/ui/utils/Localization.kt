@@ -510,6 +510,38 @@ class L10n(val language: AppLanguage) {
         AppLanguage.CHINESE -> "发送成功！请查看您的邮箱。"
     }
 
+    // Forgot Password
+    val forgotPassword = when(language) {
+        AppLanguage.ENGLISH -> "Forgot Password?"
+        AppLanguage.JAPANESE -> "パスワードをお忘れですか？"
+        AppLanguage.CHINESE -> "忘记密码？"
+    }
+    val forgotPasswordTitle = when(language) {
+        AppLanguage.ENGLISH -> "Reset Password"
+        AppLanguage.JAPANESE -> "パスワードリセット"
+        AppLanguage.CHINESE -> "重置密码"
+    }
+    val forgotPasswordDesc = when(language) {
+        AppLanguage.ENGLISH -> "Enter the email address you registered with. We'll send you a link to reset your password."
+        AppLanguage.JAPANESE -> "登録時に使用したメールアドレスを入力してください。パスワードリセット用のリンクをお送りします。"
+        AppLanguage.CHINESE -> "请输入你注册时使用的邮箱地址，我们将发送重置密码的链接到该邮箱。"
+    }
+    val forgotPasswordSent = when(language) {
+        AppLanguage.ENGLISH -> "Password reset email sent! Please check your inbox."
+        AppLanguage.JAPANESE -> "パスワードリセットメールを送信しました！メールを確認してください。"
+        AppLanguage.CHINESE -> "密码重置邮件已发送！请检查你的收件箱。"
+    }
+    val forgotPasswordFailed = when(language) {
+        AppLanguage.ENGLISH -> "Failed to send reset email. Please check the email address."
+        AppLanguage.JAPANESE -> "リセットメールの送信に失敗しました。メールアドレスを確認してください。"
+        AppLanguage.CHINESE -> "重置邮件发送失败，请检查邮箱地址是否正确。"
+    }
+    val sendResetLink = when(language) {
+        AppLanguage.ENGLISH -> "Send Reset Link"
+        AppLanguage.JAPANESE -> "リセットリンクを送信"
+        AppLanguage.CHINESE -> "发送重置链接"
+    }
+
     // Log Session
     val end = when(language) {
         AppLanguage.ENGLISH -> "End"

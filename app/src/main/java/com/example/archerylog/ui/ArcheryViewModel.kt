@@ -11,6 +11,7 @@ import com.example.archerylog.data.*
 import com.example.archerylog.domain.ArcheryRepository
 import com.example.archerylog.ui.utils.AppLanguage
 import com.example.archerylog.utils.AvatarCacheManager
+import com.example.archerylog.ui.utils.L10n
 import org.json.JSONObject
 import org.json.JSONArray
 import java.net.HttpURLConnection
@@ -27,7 +28,6 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
-import com.example.archerylog.ui.utils.L10n
 import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -459,7 +459,19 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         return try { 
             var finalEmail = identifier
             
+            // Clear any stale session state before attempting sign-in.
+            // After logout, the Supabase Auth SDK may retain internal state
+            // that interferes with a fresh signInWith() call.
+            try {
+                supabase.auth.signOut()
+            } catch (_: Exception) {
+                // Ignore — we just want to ensure a clean auth state
+            }
+            
             if (!identifier.contains("@")) {
+                // Try to look up the email by username from the users table.
+                // This query may fail if RLS blocks anonymous access (e.g. after logout),
+                // so we handle the failure gracefully instead of returning an error immediately.
                 val cloudUser = try {
                     supabase.postgrest.from("users")
                         .select { 
@@ -472,20 +484,34 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                         }
                         .decodeSingleOrNull<User>()
                 } catch (e: Exception) {
-                    return l10n.loginNetworkError
+                    android.util.Log.w("ArcheryLogin", "Username lookup failed (likely RLS after signOut): ${e.message}")
+                    null // Don't return error — fall through to try local DB lookup
                 }
                 
-                if (cloudUser == null || cloudUser.email == null) {
-                    return l10n.loginUserNotFound
+                if (cloudUser != null && !cloudUser.email.isNullOrEmpty()) {
+                    finalEmail = cloudUser.email!!
+                } else {
+                    // Cloud lookup failed or returned no result — try local database as fallback
+                    val localUser = try {
+                        repository.getUserByUsername(identifier) ?: repository.getUserByUsername(identifier.lowercase())
+                    } catch (e: Exception) { null }
+                    
+                    if (localUser != null && !localUser.email.isNullOrEmpty()) {
+                        finalEmail = localUser.email!!
+                    } else {
+                        return l10n.loginUserNotFound
+                    }
                 }
-                finalEmail = cloudUser.email!!
             }
 
+            android.util.Log.d("ArcheryLogin", "Attempting signInWith(Email) for: $finalEmail")
             supabase.auth.signInWith(Email) {
                 this.email = finalEmail
                 this.password = passwordHash
             }
+            android.util.Log.d("ArcheryLogin", "signInWith succeeded, retrieving user...")
             val userId = supabase.auth.currentUserOrNull()?.id ?: return l10n.loginNoIdError
+            android.util.Log.d("ArcheryLogin", "User ID: $userId")
             
             val cloudProfile = try {
                 supabase.postgrest.from("users")
@@ -509,12 +535,14 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             loginInternal(userId)
             null
         } catch (e: Exception) {
-            e.printStackTrace()
-            val msg = e.localizedMessage ?: ""
+            android.util.Log.e("ArcheryLogin", "Login FAILED: ${e.javaClass.simpleName}: ${e.message}", e)
+            val msg = (e.localizedMessage ?: "") + " " + (e.message ?: "")
             when {
                 msg.contains("Email not confirmed", ignoreCase = true) || 
                 msg.contains("Email not verified", ignoreCase = true) -> l10n.emailNotVerifiedError
-                msg.contains("invalid_credentials", ignoreCase = true) -> l10n.invalidCredentials
+                msg.contains("invalid_credentials", ignoreCase = true) ||
+                msg.contains("Invalid login credentials", ignoreCase = true) ||
+                msg.contains("invalid_grant", ignoreCase = true) -> l10n.invalidCredentials
                 else -> l10n.loginFailed
             }
         }
@@ -528,6 +556,25 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         } catch (e: Exception) {
             e.printStackTrace()
             "Failed to send: ${e.localizedMessage}"
+        }
+    }
+
+    suspend fun resetPassword(email: String): String? {
+        val l10n = L10n(currentLanguage.value)
+        return try {
+            val langCode = when (currentLanguage.value) {
+                AppLanguage.ENGLISH -> "en"
+                AppLanguage.JAPANESE -> "ja"
+                AppLanguage.CHINESE -> "zh"
+            }
+            supabase.auth.resetPasswordForEmail(
+                email = email,
+                redirectUrl = "https://auth.blueskylabs.app/reset-password.html?lang=$langCode"
+            )
+            null // success — caller will show the success message
+        } catch (e: Exception) {
+            android.util.Log.e("ArcheryLogin", "Reset password failed: ${e.message}", e)
+            l10n.forgotPasswordFailed
         }
     }
 
@@ -669,13 +716,15 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun logout() {
-        viewModelScope.launch {
-            try { supabase.auth.signOut() } catch (e: Exception) {}
-            _currentUserId.value = ""
-            prefs.edit().putString("current_user_uuid", "").apply()
-            finishSession()
+    suspend fun logout() {
+        try {
+            supabase.auth.signOut()
+        } catch (e: Exception) {
+            android.util.Log.w("ArcheryLogout", "signOut error (ignored): ${e.message}")
         }
+        _currentUserId.value = ""
+        prefs.edit().putString("current_user_uuid", "").apply()
+        finishSession()
     }
 
     fun getSessionDetails(sessionId: String) = repository.getEndsWithShotsForSession(sessionId)

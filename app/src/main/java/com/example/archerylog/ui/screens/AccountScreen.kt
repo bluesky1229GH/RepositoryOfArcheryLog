@@ -267,10 +267,14 @@ fun AccountScreen(
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
+                val logoutScope = rememberCoroutineScope()
+                
                 Button(
                     onClick = { 
-                        viewModel.logout()
-                        onLogout()
+                        logoutScope.launch {
+                            viewModel.logout()
+                            onLogout()
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(contentColor = androidx.compose.ui.graphics.Color.White)
