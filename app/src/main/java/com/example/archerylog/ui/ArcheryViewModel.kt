@@ -47,7 +47,9 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         supabaseKey = com.example.archerylog.BuildConfig.SUPABASE_ANON_KEY.trim()
     ) {
         install(io.github.jan.supabase.postgrest.Postgrest)
-        install(io.github.jan.supabase.auth.Auth)
+        install(io.github.jan.supabase.auth.Auth) {
+            flowType = io.github.jan.supabase.auth.FlowType.PKCE
+        }
         install(io.github.jan.supabase.storage.Storage)
 
         defaultSerializer = io.github.jan.supabase.serializer.KotlinXSerializer(kotlinx.serialization.json.Json {
