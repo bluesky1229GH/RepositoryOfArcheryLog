@@ -27,6 +27,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.parseSessionFromUrl
+import io.github.jan.supabase.auth.parseSessionFromFragment
 import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
@@ -585,7 +586,17 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             try {
                 android.util.Log.d("OAuthCallback", "Received callback URL: $url")
                 if (url.contains("access_token=") || url.contains("refresh_token=")) {
-                    val session = supabase.auth.parseSessionFromUrl(url)
+                    val session = try {
+                        if (url.contains("#")) {
+                            val fragment = url.substringAfter("#")
+                            supabase.auth.parseSessionFromFragment(fragment)
+                        } else {
+                            supabase.auth.parseSessionFromUrl(url)
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("OAuthCallback", "Parse failed, falling back to parseSessionFromUrl: ${e.message}")
+                        supabase.auth.parseSessionFromUrl(url)
+                    }
                     supabase.auth.importSession(session)
                     
                     val user = supabase.auth.currentUserOrNull()
