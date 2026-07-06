@@ -38,8 +38,8 @@ android {
         applicationId = "com.bluesky.archerylog"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.4"
+        versionCode = 6
+        versionName = "2.0.1"
 
         // Project API Keys
         val apiKey = props.getProperty("GEMINI_API_KEY")?.trim() ?: ""
