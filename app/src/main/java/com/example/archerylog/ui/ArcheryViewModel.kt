@@ -585,7 +585,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             try {
                 android.util.Log.d("OAuthCallback", "Received callback URL: $url")
-                if (url.contains("access_token=") || url.contains("refresh_token=")) {
+                if (url.startsWith("archerylog://")) {
                     val session = try {
                         if (url.contains("#")) {
                             val fragment = url.substringAfter("#")
