@@ -782,6 +782,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun loginInternal(userId: String) {
+        if (_currentUserId.value == userId) return
         _currentUserId.value = userId
         prefs.edit().putString("current_user_uuid", userId).apply()
         viewModelScope.launch {
