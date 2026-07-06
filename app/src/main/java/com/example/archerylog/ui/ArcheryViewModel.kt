@@ -25,6 +25,8 @@ import io.github.jan.supabase.postgrest.query.filter.*
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.providers.Google
+import io.github.jan.supabase.auth.parseSessionFromUrl
 import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
@@ -563,6 +565,60 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             repository.insertUser(guestUser)
         }
         loginInternal("guest")
+    }
+
+    fun loginWithGoogle() {
+        viewModelScope.launch {
+            try {
+                supabase.auth.signInWith(
+                    provider = Google,
+                    redirectUrl = "archerylog://callback"
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("GoogleSignIn", "Failed to start Google sign-in: ${e.message}", e)
+            }
+        }
+    }
+
+    fun handleDeepLink(url: String) {
+        viewModelScope.launch {
+            try {
+                android.util.Log.d("OAuthCallback", "Received callback URL: $url")
+                if (url.contains("access_token=") || url.contains("refresh_token=")) {
+                    val session = supabase.auth.parseSessionFromUrl(url)
+                    supabase.auth.importSession(session)
+                    
+                    val user = supabase.auth.currentUserOrNull()
+                    if (user != null) {
+                        val userId = user.id
+                        val email = user.email ?: ""
+                        
+                        val cloudProfile = try {
+                            supabase.postgrest.from("users")
+                                .select { filter { eq("id", userId) } }
+                                .decodeSingleOrNull<User>()
+                        } catch (e: Exception) { null }
+                        
+                        val finalUser = cloudProfile ?: User(
+                            id = userId, 
+                            email = email, 
+                            username = email.substringBefore("@")
+                        )
+                        saveOrUpdateUserLocally(finalUser)
+                        
+                        if (cloudProfile == null) {
+                            try {
+                                supabase.postgrest.from("users").upsert(finalUser)
+                            } catch (e: Exception) {}
+                        }
+                        
+                        loginInternal(userId)
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("OAuthCallback", "Failed to parse session from URL: ${e.message}", e)
+            }
+        }
     }
 
     suspend fun resendVerificationEmail(email: String): String? {

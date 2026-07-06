@@ -1,5 +1,6 @@
 package com.example.archerylog
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -76,6 +77,10 @@ class MainActivity : ComponentActivity() {
         // Completely disable activity-level transitions
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
+
+        intent?.data?.let { uri ->
+            viewModel.handleDeepLink(uri.toString())
+        }
         
         setContent {
             ArcheryLogTheme {
@@ -86,6 +91,13 @@ class MainActivity : ComponentActivity() {
                     ArcheryApp(viewModel)
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent?.data?.let { uri ->
+            viewModel.handleDeepLink(uri.toString())
         }
     }
 }

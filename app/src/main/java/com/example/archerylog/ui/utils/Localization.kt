@@ -711,4 +711,16 @@ class L10n(val language: AppLanguage) {
         AppLanguage.JAPANESE -> java.util.Locale.JAPANESE
         AppLanguage.CHINESE -> java.util.Locale.CHINESE
     }
+
+    val loginWithGoogle = when(language) {
+        AppLanguage.ENGLISH -> "Sign in with Google"
+        AppLanguage.JAPANESE -> "Googleでログイン"
+        AppLanguage.CHINESE -> "使用 Google 登录"
+    }
+
+    val googleLoginPrompt = when(language) {
+        AppLanguage.ENGLISH -> "✨ New: You can now sign in or sign up quickly using your Google account without email verification!"
+        AppLanguage.JAPANESE -> "✨ 新機能: Googleアカウントを使って、メール確認なしで素早くログインや新規登録ができるようになりました！"
+        AppLanguage.CHINESE -> "✨ 新功能：您现在可以使用 Google 账号快速登录或注册，免去邮箱验证的繁琐步骤！"
+    }
 }
