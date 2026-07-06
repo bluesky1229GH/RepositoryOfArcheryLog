@@ -709,16 +709,23 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
 
     fun handleIntent(intent: android.content.Intent) {
         viewModelScope.launch {
-            try {
-                val uri = intent.data
-                _debugMessage.value = "收到 Activity Intent 数据: $uri"
-                if (uri != null) {
+            val uri = intent.data
+            if (uri != null) {
+                try {
+                    _showSyncMask.value = true
+                    _debugMessage.value = "收到 Activity Intent 数据: $uri"
                     supabase.handleDeeplinks(intent)
+                    
+                    // If after handling deeplinks, the user is still not logged in, hide mask
+                    if (supabase.auth.currentUserOrNull() == null) {
+                        _showSyncMask.value = false
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("OAuthCallback", "handleDeeplinks failed: ${e.message}", e)
+                    _debugMessage.value = "handleDeeplinks 错误: ${e.message}"
+                    _oauthError.value = e.localizedMessage ?: e.message ?: "Deep Link processing failed"
+                    _showSyncMask.value = false
                 }
-            } catch (e: Exception) {
-                android.util.Log.e("OAuthCallback", "handleDeeplinks failed: ${e.message}", e)
-                _debugMessage.value = "handleDeeplinks 错误: ${e.message}"
-                _oauthError.value = e.localizedMessage ?: e.message ?: "Deep Link processing failed"
             }
         }
     }
