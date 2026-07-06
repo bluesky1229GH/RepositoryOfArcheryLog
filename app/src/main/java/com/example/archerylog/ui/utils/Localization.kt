@@ -720,7 +720,13 @@ class L10n(val language: AppLanguage) {
 
     val googleLoginPrompt = when(language) {
         AppLanguage.ENGLISH -> "✨ New: You can now sign in or sign up quickly using your Google account without email verification!"
-        AppLanguage.JAPANESE -> "✨ 新機能: Googleアカウントを使って、メール確認なしで素早くログインや新規登録ができるようになりました！"
+        AppLanguage.JAPANESE -> "✨ 新機能: Googleアカウントを使って、メール確認なしで素快速ログインや新規登録ができるようになりました！"
         AppLanguage.CHINESE -> "✨ 新功能：您现在可以使用 Google 账号快速登录或注册，免去邮箱验证的繁琐步骤！"
+    }
+
+    val or = when(language) {
+        AppLanguage.ENGLISH -> "OR"
+        AppLanguage.JAPANESE -> "または"
+        AppLanguage.CHINESE -> "或"
     }
 }

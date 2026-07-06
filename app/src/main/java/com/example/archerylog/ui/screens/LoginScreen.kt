@@ -145,31 +145,60 @@ fun LoginScreen(
             Text(if (isSignUp) l10n.signupButton else l10n.loginButton)
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            if (!isSignUp) {
+                TextButton(
+                    onClick = { showForgotPasswordDialog = true },
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Text(
+                        text = l10n.forgotPassword,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+
+            TextButton(
+                onClick = {
+                    isSignUp = !isSignUp
+                    error = null
+                },
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
-                    text = "✨",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = l10n.googleLoginPrompt,
+                    text = if (isSignUp) l10n.hasAccount else l10n.noAccount,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+            Text(
+                text = l10n.or,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedButton(
             onClick = {
@@ -194,7 +223,23 @@ fun LoginScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+            Text(
+                text = l10n.or,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedButton(
             onClick = {
@@ -206,24 +251,6 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(l10n.continueAsGuest)
-        }
-
-        // Forgot Password button — only show in login mode
-        if (!isSignUp) {
-            TextButton(
-                onClick = { showForgotPasswordDialog = true }
-            ) {
-                Text(l10n.forgotPassword, color = MaterialTheme.colorScheme.primary)
-            }
-        }
-
-        TextButton(
-            onClick = { 
-                isSignUp = !isSignUp
-                error = null
-            }
-        ) {
-            Text(if (isSignUp) l10n.hasAccount else l10n.noAccount)
         }
     }
 
