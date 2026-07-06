@@ -135,6 +135,9 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing = _isSyncing.asStateFlow()
 
+    private val _showSyncMask = MutableStateFlow(false)
+    val showSyncMask = _showSyncMask.asStateFlow()
+
     init {
         val userId = _currentUserId.value
         if (userId.isNotBlank()) {
@@ -597,9 +600,13 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         prefs.edit().putString("current_user_uuid", userId).apply()
         viewModelScope.launch {
             if (userId != "guest") {
-                repository.transferGuestData(userId)
+                _showSyncMask.value = true
             }
-            syncDataFromCloud(userId)
+            try {
+                syncDataFromCloud(userId)
+            } finally {
+                _showSyncMask.value = false
+            }
         }
     }
 

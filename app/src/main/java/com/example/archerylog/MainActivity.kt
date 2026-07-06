@@ -99,7 +99,7 @@ fun ArcheryApp(viewModel: ArcheryViewModel) {
     val l10n = L10n(currentLanguage)
 
     val bottomBarRoutes = listOf("dashboard", "records", "add_session", "account")
-    val isSyncing by viewModel.isSyncing.collectAsState()
+    val showSyncMask by viewModel.showSyncMask.collectAsState()
 
     val instantEnter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(0))
     val instantExit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(0))
@@ -242,7 +242,7 @@ fun ArcheryApp(viewModel: ArcheryViewModel) {
                 }
             }
 
-            if (isSyncing) {
+            if (showSyncMask) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
