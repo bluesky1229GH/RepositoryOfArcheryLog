@@ -149,6 +149,14 @@ fun LoginScreen(
 
         Button(
             onClick = {
+                if (identifier.isBlank()) {
+                    error = l10n.emptyIdentifierError
+                    return@Button
+                }
+                if (password.isBlank()) {
+                    error = l10n.emptyPasswordError
+                    return@Button
+                }
                 scope.launch {
                     val errorMsg = if (isSignUp) {
                         viewModel.signup(identifier, password)

@@ -735,4 +735,16 @@ class L10n(val language: AppLanguage) {
         AppLanguage.JAPANESE -> "ログインを検証中、しばらくお待ちください..."
         AppLanguage.CHINESE -> "正在验证登录，请稍后..."
     }
+
+    val emptyIdentifierError = when(language) {
+        AppLanguage.ENGLISH -> "Please enter your email or username."
+        AppLanguage.JAPANESE -> "メールアドレスまたはユーザー名を入力してください。"
+        AppLanguage.CHINESE -> "请输入邮箱或用户名。"
+    }
+
+    val emptyPasswordError = when(language) {
+        AppLanguage.ENGLISH -> "Please enter your password."
+        AppLanguage.JAPANESE -> "パスワードを入力してください。"
+        AppLanguage.CHINESE -> "请输入密码。"
+    }
 }
