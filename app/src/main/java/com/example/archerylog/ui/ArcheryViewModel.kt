@@ -205,6 +205,8 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                         
                         loginInternal(authUserId)
                     }
+                } else if (status is SessionStatus.NotAuthenticated || status is SessionStatus.RefreshFailure) {
+                    _showSyncMask.value = false
                 }
             }
         }
@@ -715,11 +717,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                     _showSyncMask.value = true
                     _debugMessage.value = "收到 Activity Intent 数据: $uri"
                     supabase.handleDeeplinks(intent)
-                    
-                    // If after handling deeplinks, the user is still not logged in, hide mask
-                    if (supabase.auth.currentUserOrNull() == null) {
-                        _showSyncMask.value = false
-                    }
                 } catch (e: Exception) {
                     android.util.Log.e("OAuthCallback", "handleDeeplinks failed: ${e.message}", e)
                     _debugMessage.value = "handleDeeplinks 错误: ${e.message}"
