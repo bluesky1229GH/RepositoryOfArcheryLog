@@ -465,6 +465,9 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
 
     suspend fun signup(email: String, passwordHash: String): String? {
         val l10n = L10n(currentLanguage.value)
+        _syncMaskType.value = SyncMaskType.VERIFYING_LOGIN
+        _showSyncMask.value = true
+        var success = false
         return try {
             val params = kotlinx.serialization.json.buildJsonObject {
                 put("check_email", kotlinx.serialization.json.JsonPrimitive(email))
@@ -521,13 +524,20 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 msg.contains("rate limit exceeded", ignoreCase = true) || msg.contains("Too many requests", ignoreCase = true) -> l10n.rateLimitExceeded
                 msg.contains("invalid_credentials", ignoreCase = true) -> l10n.invalidCredentials
                 msg.contains("User already exists", ignoreCase = true) -> l10n.emailAlreadyRegistered
-                else -> l10n.operationFailed
+                else -> l10n.signupFailed
+            }
+        } finally {
+            if (!success) {
+                _showSyncMask.value = false
             }
         }
     }
 
     suspend fun login(identifier: String, passwordHash: String): String? {
         val l10n = L10n(currentLanguage.value)
+        _syncMaskType.value = SyncMaskType.VERIFYING_LOGIN
+        _showSyncMask.value = true
+        var success = false
         return try { 
             var finalEmail = identifier
             
@@ -605,6 +615,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             }
             
             loginInternal(userId)
+            success = true
             null
         } catch (e: Exception) {
             android.util.Log.e("ArcheryLogin", "Login FAILED: ${e.javaClass.simpleName}: ${e.message}", e)
@@ -616,6 +627,10 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 msg.contains("Invalid login credentials", ignoreCase = true) ||
                 msg.contains("invalid_grant", ignoreCase = true) -> l10n.invalidCredentials
                 else -> l10n.loginFailed
+            }
+        } finally {
+            if (!success) {
+                _showSyncMask.value = false
             }
         }
     }
