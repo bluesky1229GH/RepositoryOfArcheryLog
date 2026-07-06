@@ -44,6 +44,8 @@ fun LoginScreen(
         }
     }
 
+    val debugMessage by viewModel.debugMessage.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -51,6 +53,34 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        if (debugMessage != null) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = "🛠️ 调试日志 (Debug Log):",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = debugMessage!!,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                    TextButton(
+                        onClick = { viewModel.clearDebugMessage() },
+                        modifier = Modifier.align(Alignment.End),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("关闭", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+
         Text(
             text = "Archery Log",
             style = MaterialTheme.typography.displayMedium,

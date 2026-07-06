@@ -148,6 +148,13 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         _oauthError.value = null
     }
 
+    private val _debugMessage = MutableStateFlow<String?>(null)
+    val debugMessage = _debugMessage.asStateFlow()
+
+    fun clearDebugMessage() {
+        _debugMessage.value = null
+    }
+
     init {
         val userId = _currentUserId.value
         if (userId.isNotBlank()) {
@@ -589,6 +596,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun handleDeepLink(url: String) {
+        _debugMessage.value = "收到回调 URL: $url"
         viewModelScope.launch {
             try {
                 android.util.Log.d("OAuthCallback", "Received callback URL: $url")
@@ -602,40 +610,57 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("OAuthCallback", "Parse failed, falling back to parseSessionFromUrl: ${e.message}")
+                        _debugMessage.value = "解析会话错误，尝试后备方案: ${e.message}"
                         supabase.auth.parseSessionFromUrl(url)
                     }
+                    
+                    _debugMessage.value = "会话解析成功，正在导入 SDK..."
                     supabase.auth.importSession(session)
                     
                     val user = supabase.auth.currentUserOrNull()
                     if (user != null) {
                         val userId = user.id
                         val email = user.email ?: ""
+                        _debugMessage.value = "用户已就绪: $email ($userId). 正在查询云端 profile..."
                         
                         val cloudProfile = try {
                             supabase.postgrest.from("users")
                                 .select { filter { eq("id", userId) } }
                                 .decodeSingleOrNull<User>()
-                        } catch (e: Exception) { null }
+                        } catch (e: Exception) { 
+                            _debugMessage.value = "查询云端 profile 报错: ${e.message}"
+                            null 
+                        }
                         
                         val finalUser = cloudProfile ?: User(
                             id = userId, 
                             email = email, 
                             username = email.substringBefore("@")
                         )
+                        _debugMessage.value = "正在写入本地数据库..."
                         saveOrUpdateUserLocally(finalUser)
                         
                         if (cloudProfile == null) {
                             try {
+                                _debugMessage.value = "正在同步个人信息到云端..."
                                 supabase.postgrest.from("users").upsert(finalUser)
-                            } catch (e: Exception) {}
+                            } catch (e: Exception) {
+                                _debugMessage.value = "同步到云端 users 表报错: ${e.message}"
+                            }
                         }
                         
+                        _debugMessage.value = "正在调用 loginInternal 并同步记录..."
                         loginInternal(userId)
+                    } else {
+                        _debugMessage.value = "导入成功，但获取 currentUserOrNull 为空！"
                     }
+                } else {
+                    _debugMessage.value = "忽略非本 App Scheme 的 URL: $url"
                 }
             } catch (e: Exception) {
                 android.util.Log.e("OAuthCallback", "Failed to parse session from URL: ${e.message}", e)
                 _oauthError.value = e.localizedMessage ?: e.message ?: "OAuth Login Failed"
+                _debugMessage.value = "handleDeepLink 崩溃: ${e.message}"
             }
         }
     }
