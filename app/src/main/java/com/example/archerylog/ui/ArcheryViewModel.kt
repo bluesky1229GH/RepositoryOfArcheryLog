@@ -742,10 +742,18 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     suspend fun logout() {
+        val userId = _currentUserId.value
         try {
             supabase.auth.signOut()
         } catch (e: Exception) {
             android.util.Log.w("ArcheryLogout", "signOut error (ignored): ${e.message}")
+        }
+        if (userId.isNotBlank() && userId != "guest") {
+            try {
+                repository.deleteUser(userId)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
         _currentUserId.value = ""
         prefs.edit().putString("current_user_uuid", "").apply()
