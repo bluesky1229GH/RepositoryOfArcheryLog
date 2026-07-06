@@ -617,7 +617,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                     _debugMessage.value = "会话解析成功，正在导入 SDK..."
                     supabase.auth.importSession(session)
                     
-                    val user = supabase.auth.currentUserOrNull()
+                    val user = session.user
                     if (user != null) {
                         val userId = user.id
                         val email = user.email ?: ""
