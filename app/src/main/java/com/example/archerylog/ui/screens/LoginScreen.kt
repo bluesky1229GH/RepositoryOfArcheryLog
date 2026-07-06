@@ -147,10 +147,10 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             if (!isSignUp) {
                 TextButton(
@@ -163,8 +163,6 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-            } else {
-                Spacer(modifier = Modifier.weight(1f))
             }
 
             TextButton(
