@@ -499,21 +499,18 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             
             val userId = user.id
             
+            val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
+            try {
+                supabase.postgrest.from("users").upsert(newUser)
+                saveOrUpdateUserLocally(newUser)
+            } catch (e: Exception) {}
+
             if (user.confirmedAt == null || user.emailConfirmedAt == null) {
-                try {
-                    val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
-                    supabase.postgrest.from("users").upsert(newUser)
-                    saveOrUpdateUserLocally(newUser)
-                } catch (e: Exception) {}
                 try { supabase.auth.signOut() } catch (_: Exception) {}
                 return l10n.verificationSentHint
             }
-
-            val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
-            supabase.postgrest.from("users").upsert(newUser)
-            saveOrUpdateUserLocally(newUser)
             
-            loginInternal(userId)
+            success = true
             null
         } catch (e: Exception) {
             e.printStackTrace()
@@ -589,30 +586,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 this.email = finalEmail
                 this.password = passwordHash
             }
-            android.util.Log.d("ArcheryLogin", "signInWith succeeded, retrieving user...")
-            val userId = supabase.auth.currentUserOrNull()?.id ?: return l10n.loginNoIdError
-            android.util.Log.d("ArcheryLogin", "User ID: $userId")
-            
-            val cloudProfile = try {
-                supabase.postgrest.from("users")
-                    .select { filter { eq("id", userId) } }
-                    .decodeSingleOrNull<User>()
-            } catch (e: Exception) { null }
-            
-            val finalUser = cloudProfile ?: User(
-                id = userId, 
-                email = finalEmail, 
-                username = finalEmail.substringBefore("@")
-            )
-            saveOrUpdateUserLocally(finalUser)
-            
-            if (cloudProfile == null) {
-                try {
-                    supabase.postgrest.from("users").upsert(finalUser)
-                } catch (e: Exception) {}
-            }
-            
-            loginInternal(userId)
             success = true
             null
         } catch (e: Exception) {
