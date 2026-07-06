@@ -467,6 +467,11 @@ class L10n(val language: AppLanguage) {
         AppLanguage.JAPANESE -> "既にアカウントをお持ちの方はこちら"
         AppLanguage.CHINESE -> "已有账号？去登录"
     }
+    val continueAsGuest = when(language) {
+        AppLanguage.ENGLISH -> "Continue as Guest"
+        AppLanguage.JAPANESE -> "ゲストとして続行"
+        AppLanguage.CHINESE -> "以访客身份继续"
+    }
     val loginFailed = when(language) {
         AppLanguage.ENGLISH -> "Login Failed. Please check your credentials."
         AppLanguage.JAPANESE -> "ログインに失敗しました。入力内容を確認してください。"

@@ -144,6 +144,20 @@ fun LoginScreen(
             Text(if (isSignUp) l10n.signupButton else l10n.loginButton)
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = {
+                scope.launch {
+                    viewModel.loginAsGuest()
+                    onLoginSuccess()
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(l10n.continueAsGuest)
+        }
+
         // Forgot Password button — only show in login mode
         if (!isSignUp) {
             TextButton(

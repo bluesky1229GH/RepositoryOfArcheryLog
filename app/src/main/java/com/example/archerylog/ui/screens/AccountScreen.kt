@@ -103,8 +103,10 @@ fun AccountScreen(
                                 Text(l10n.username, style = MaterialTheme.typography.labelMedium)
                                 Text(user.username, style = MaterialTheme.typography.bodyLarge)
                             }
-                            IconButton(onClick = { showUsernameDialog = true }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit Username")
+                            if (user.id != "guest") {
+                                IconButton(onClick = { showUsernameDialog = true }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit Username")
+                                }
                             }
                         }
                         
@@ -115,8 +117,10 @@ fun AccountScreen(
                                 Text(l10n.email, style = MaterialTheme.typography.labelMedium)
                                 Text(if (user.email.isNullOrEmpty()) l10n.notSet else user.email ?: "", style = MaterialTheme.typography.bodyLarge)
                             }
-                            IconButton(onClick = { showEmailDialog = true }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit Email")
+                            if (user.id != "guest") {
+                                IconButton(onClick = { showEmailDialog = true }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit Email")
+                                }
                             }
                         }
                         
@@ -127,8 +131,10 @@ fun AccountScreen(
                                 Text(l10n.password, style = MaterialTheme.typography.labelMedium)
                                 Text("********", style = MaterialTheme.typography.bodyLarge)
                             }
-                            IconButton(onClick = { showPasswordDialog = true }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit Password")
+                            if (user.id != "guest") {
+                                IconButton(onClick = { showPasswordDialog = true }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit Password")
+                                }
                             }
                         }
                     }
@@ -284,12 +290,14 @@ fun AccountScreen(
                     Text(l10n.logout, color = androidx.compose.ui.graphics.Color.White)
                 }
                 
-                OutlinedButton(
-                    onClick = { showDeleteDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = androidx.compose.ui.graphics.Color.White)
-                ) {
-                    Text(l10n.deleteAccount, color = androidx.compose.ui.graphics.Color.White)
+                if (user.id != "guest") {
+                    OutlinedButton(
+                        onClick = { showDeleteDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = androidx.compose.ui.graphics.Color.White)
+                    ) {
+                        Text(l10n.deleteAccount, color = androidx.compose.ui.graphics.Color.White)
+                    }
                 }
             } else {
                 Text("Loading...")

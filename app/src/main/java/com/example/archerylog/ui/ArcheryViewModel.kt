@@ -548,6 +548,17 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    suspend fun loginAsGuest() {
+        val guestUser = User(
+            id = "guest",
+            username = "Guest",
+            email = "guest@local.archerylog",
+            passwordHash = ""
+        )
+        repository.insertUser(guestUser)
+        loginInternal("guest")
+    }
+
     suspend fun resendVerificationEmail(email: String): String? {
         val l10n = L10n(currentLanguage.value)
         return try {
@@ -587,6 +598,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private suspend fun syncDataFromCloud(userId: String) {
+        if (userId == "guest") return
         if (_isSyncing.value) return
         _isSyncing.value = true
         
