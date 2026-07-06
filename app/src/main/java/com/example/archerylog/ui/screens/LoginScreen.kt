@@ -36,6 +36,14 @@ fun LoginScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var showForgotPasswordDialog by remember { mutableStateOf(false) }
 
+    val oauthError by viewModel.oauthError.collectAsState()
+    LaunchedEffect(oauthError) {
+        if (oauthError != null) {
+            error = oauthError
+            viewModel.clearOauthError()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

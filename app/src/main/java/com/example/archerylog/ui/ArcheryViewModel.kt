@@ -141,6 +141,13 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     private val _showSyncMask = MutableStateFlow(false)
     val showSyncMask = _showSyncMask.asStateFlow()
 
+    private val _oauthError = MutableStateFlow<String?>(null)
+    val oauthError = _oauthError.asStateFlow()
+
+    fun clearOauthError() {
+        _oauthError.value = null
+    }
+
     init {
         val userId = _currentUserId.value
         if (userId.isNotBlank()) {
@@ -628,6 +635,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 }
             } catch (e: Exception) {
                 android.util.Log.e("OAuthCallback", "Failed to parse session from URL: ${e.message}", e)
+                _oauthError.value = e.localizedMessage ?: e.message ?: "OAuth Login Failed"
             }
         }
     }
