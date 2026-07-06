@@ -19,6 +19,7 @@ import com.example.archerylog.ui.utils.L10n
 import kotlinx.coroutines.launch
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 
 @Composable
 fun LoginScreen(
@@ -217,10 +218,11 @@ fun LoginScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = "G",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.primary
+                Icon(
+                    painter = painterResource(id = com.example.archerylog.R.drawable.ic_google_logo),
+                    contentDescription = "Google Logo",
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(18.dp)
                 )
                 Text(
                     text = l10n.loginWithGoogle,
