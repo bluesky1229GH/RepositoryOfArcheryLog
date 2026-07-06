@@ -164,8 +164,8 @@ fun LoginScreen(
                 }
             },
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isSignUp) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
-                contentColor = if (isSignUp) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onPrimary
+                containerColor = if (isSignUp) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.primary,
+                contentColor = Color.Black
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
