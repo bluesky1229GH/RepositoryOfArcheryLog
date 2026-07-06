@@ -185,7 +185,7 @@ fun LoginScreen(
             Text(
                 text = if (isSignUp) l10n.hasAccount else l10n.noAccount,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onTertiary
             )
         }
 
