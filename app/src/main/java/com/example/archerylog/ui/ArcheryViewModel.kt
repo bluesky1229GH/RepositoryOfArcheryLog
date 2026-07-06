@@ -430,7 +430,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 try {
                     val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
                     supabase.postgrest.from("users").upsert(newUser)
-                    repository.insertUser(newUser)
+                    saveOrUpdateUserLocally(newUser)
                 } catch (e: Exception) {}
                 try { supabase.auth.signOut() } catch (_: Exception) {}
                 return l10n.verificationSentHint
@@ -438,7 +438,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
 
             val newUser = User(id = userId, email = email, username = email.substringBefore("@"))
             supabase.postgrest.from("users").upsert(newUser)
-            repository.insertUser(newUser)
+            saveOrUpdateUserLocally(newUser)
             
             loginInternal(userId)
             null
@@ -524,7 +524,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 email = finalEmail, 
                 username = finalEmail.substringBefore("@")
             )
-            repository.insertUser(finalUser)
+            saveOrUpdateUserLocally(finalUser)
             
             if (cloudProfile == null) {
                 try {
@@ -618,7 +618,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                     } catch (e: Exception) { null }
                     
                     if (cloudUser != null) {
-                        repository.insertUser(cloudUser)
+                        saveOrUpdateUserLocally(cloudUser)
                         cloudUser.avatarUri?.let { uri ->
                             viewModelScope.launch {
                                 AvatarCacheManager.downloadToCache(getApplication(), uri)
@@ -631,7 +631,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                             val local = repository.getUserById(userId)
                             if (local == null || local.username.startsWith("archer_")) {
                                 val repairedUser = User(id = userId, email = email, username = email.substringBefore("@"))
-                                repository.insertUser(repairedUser)
+                                saveOrUpdateUserLocally(repairedUser)
                                 // IMPORTANT: Push this repaired profile back to cloud so username login works next time
                                 try {
                                     supabase.postgrest.from("users").upsert(repairedUser)
@@ -936,6 +936,18 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             viewModelScope.launch {
                 repository.insertAiFavorite(AiFavorite(userId = userId, question = question, answer = answer))
             }
+        }
+    }
+
+    private suspend fun saveOrUpdateUserLocally(user: User) {
+        val existing = repository.getUserById(user.id)
+        if (existing == null) {
+            repository.insertUser(user)
+        } else {
+            repository.updateUsername(user.id, user.username)
+            user.email?.let { repository.updateEmail(user.id, it) }
+            user.avatarUri?.let { repository.updateAvatarUri(user.id, it) }
+            repository.updatePassword(user.id, user.passwordHash)
         }
     }
 }
