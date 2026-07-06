@@ -213,8 +213,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                         
                         loginInternal(authUserId)
                     }
-                } else if (status is SessionStatus.NotAuthenticated || status is SessionStatus.RefreshFailure) {
-                    _showSyncMask.value = false
                 }
             }
         }
