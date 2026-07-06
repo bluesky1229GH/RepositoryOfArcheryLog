@@ -593,6 +593,9 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         _currentUserId.value = userId
         prefs.edit().putString("current_user_uuid", userId).apply()
         viewModelScope.launch {
+            if (userId != "guest") {
+                repository.transferGuestData(userId)
+            }
             syncDataFromCloud(userId)
         }
     }

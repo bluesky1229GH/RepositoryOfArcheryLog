@@ -78,4 +78,9 @@ class ArcheryRepository(private val archeryDao: ArcheryDao) {
     fun getAiFavoritesForUser(userId: String) = archeryDao.getAiFavoritesForUser(userId)
     suspend fun insertAiFavorite(favorite: com.example.archerylog.data.AiFavorite) = archeryDao.insertAiFavorite(favorite)
     suspend fun deleteAiFavorite(id: String) = archeryDao.deleteAiFavorite(id)
+
+    suspend fun transferGuestData(newUserId: String) {
+        archeryDao.transferGuestSessions(newUserId)
+        archeryDao.transferGuestAiFavorites(newUserId)
+    }
 }

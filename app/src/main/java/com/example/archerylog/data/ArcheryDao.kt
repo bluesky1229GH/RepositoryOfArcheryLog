@@ -120,4 +120,10 @@ interface ArcheryDao {
 
     @Query("DELETE FROM ai_favorites WHERE id = :id")
     suspend fun deleteAiFavorite(id: String)
+
+    @Query("UPDATE sessions SET userId = :newUserId WHERE userId = 'guest'")
+    suspend fun transferGuestSessions(newUserId: String)
+
+    @Query("UPDATE ai_favorites SET userId = :newUserId WHERE userId = 'guest'")
+    suspend fun transferGuestAiFavorites(newUserId: String)
 }
