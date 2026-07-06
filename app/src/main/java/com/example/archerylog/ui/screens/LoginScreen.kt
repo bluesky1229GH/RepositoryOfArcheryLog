@@ -43,13 +43,17 @@ fun LoginScreen(
             viewModel.clearOauthError()
         }
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
         Text(
             text = "Archery Log",
             style = MaterialTheme.typography.displayMedium,
@@ -255,6 +259,16 @@ fun LoginScreen(
             Text(l10n.continueAsGuest)
         }
     }
+        
+    Text(
+        text = "v${com.example.archerylog.BuildConfig.VERSION_NAME}",
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .padding(bottom = 16.dp)
+    )
+}
 
     // Forgot Password Dialog
     if (showForgotPasswordDialog) {
