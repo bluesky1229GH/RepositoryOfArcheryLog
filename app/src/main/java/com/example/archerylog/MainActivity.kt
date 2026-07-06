@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Scaffold
@@ -232,6 +233,12 @@ fun ArcheryApp(viewModel: ArcheryViewModel) {
                     })
                 }
                 composable("login", enterTransition = { instantEnter }, exitTransition = { instantExit }) {
+                    val currentUserId by viewModel.currentUserId.collectAsState()
+                    LaunchedEffect(currentUserId) {
+                        if (currentUserId.isNotBlank()) {
+                            navController.navigate("dashboard") { popUpTo("login") { inclusive = true } }
+                        }
+                    }
                     LoginScreen(viewModel = viewModel, onLoginSuccess = {
                         navController.navigate("dashboard") { popUpTo("login") { inclusive = true } }
                     })
