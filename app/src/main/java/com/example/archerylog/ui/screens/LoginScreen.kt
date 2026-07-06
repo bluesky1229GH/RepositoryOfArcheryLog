@@ -75,9 +75,6 @@ fun LoginScreen(
                     Icon(imageVector = image, contentDescription = description)
                 }
             },
-            supportingText = {
-                Text(text = l10n.passwordVisibilityHint)
-            },
             modifier = Modifier.fillMaxWidth()
         )
 
