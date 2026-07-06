@@ -28,6 +28,8 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.parseSessionFromUrl
 import io.github.jan.supabase.auth.parseSessionFromFragment
+import io.github.jan.supabase.auth.handleDeeplinks
+import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
@@ -49,6 +51,8 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         install(io.github.jan.supabase.postgrest.Postgrest)
         install(io.github.jan.supabase.auth.Auth) {
             flowType = io.github.jan.supabase.auth.FlowType.PKCE
+            scheme = "archerylog"
+            host = "callback"
         }
         install(io.github.jan.supabase.storage.Storage)
 
@@ -165,6 +169,42 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                     syncDataFromCloud(userId)
                 } catch (e: Exception) {
                     e.printStackTrace()
+                }
+            }
+        }
+
+        // Listen for sessionStatus updates (OAuth redirect / OTP verification)
+        viewModelScope.launch {
+            supabase.auth.sessionStatus.collect { status ->
+                android.util.Log.d("OAuthCallback", "SessionStatus changed: $status")
+                if (status is SessionStatus.Authenticated) {
+                    val user = status.session.user
+                    if (user != null) {
+                        val authUserId = user.id
+                        val email = user.email ?: ""
+                        _debugMessage.value = "登录成功 (Authenticated)! 用户: $email ($authUserId)"
+                        
+                        val cloudProfile = try {
+                            supabase.postgrest.from("users")
+                                .select { filter { eq("id", authUserId) } }
+                                .decodeSingleOrNull<User>()
+                        } catch (e: Exception) { null }
+                        
+                        val finalUser = cloudProfile ?: User(
+                            id = authUserId, 
+                            email = email, 
+                            username = email.substringBefore("@")
+                        )
+                        saveOrUpdateUserLocally(finalUser)
+                        
+                        if (cloudProfile == null) {
+                            try {
+                                supabase.postgrest.from("users").upsert(finalUser)
+                            } catch (e: Exception) {}
+                        }
+                        
+                        loginInternal(authUserId)
+                    }
                 }
             }
         }
@@ -663,6 +703,22 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 android.util.Log.e("OAuthCallback", "Failed to parse session from URL: ${e.message}", e)
                 _oauthError.value = e.localizedMessage ?: e.message ?: "OAuth Login Failed"
                 _debugMessage.value = "handleDeepLink 崩溃: ${e.message}"
+            }
+        }
+    }
+
+    fun handleIntent(intent: android.content.Intent) {
+        viewModelScope.launch {
+            try {
+                val uri = intent.data
+                _debugMessage.value = "收到 Activity Intent 数据: $uri"
+                if (uri != null) {
+                    supabase.handleDeeplinks(intent)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("OAuthCallback", "handleDeeplinks failed: ${e.message}", e)
+                _debugMessage.value = "handleDeeplinks 错误: ${e.message}"
+                _oauthError.value = e.localizedMessage ?: e.message ?: "Deep Link processing failed"
             }
         }
     }

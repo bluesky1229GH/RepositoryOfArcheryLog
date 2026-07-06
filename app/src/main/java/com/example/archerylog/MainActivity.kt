@@ -79,8 +79,8 @@ class MainActivity : ComponentActivity() {
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
 
-        intent?.data?.let { uri ->
-            viewModel.handleDeepLink(uri.toString())
+        intent?.let {
+            viewModel.handleIntent(it)
         }
         
         setContent {
@@ -98,8 +98,8 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        intent?.data?.let { uri ->
-            viewModel.handleDeepLink(uri.toString())
+        intent?.let {
+            viewModel.handleIntent(it)
         }
     }
 }
