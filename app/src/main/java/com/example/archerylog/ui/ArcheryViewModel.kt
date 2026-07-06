@@ -849,14 +849,32 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun updatePassword(newPassword: String) {
-        viewModelScope.launch {
-            try {
-                supabase.auth.updateUser {
-                    password = newPassword
-                }
-                repository.updatePassword(_currentUserId.value, newPassword)
-            } catch (e: Exception) {}
+    suspend fun updatePassword(oldPassword: String, newPassword: String): String? {
+        val l10n = L10n(currentLanguage.value)
+        val email = currentUser.value?.email ?: return "Email not found"
+        
+        val tempSupabase = io.github.jan.supabase.createSupabaseClient(
+            supabaseUrl = com.example.archerylog.BuildConfig.SUPABASE_URL.trim(),
+            supabaseKey = com.example.archerylog.BuildConfig.SUPABASE_ANON_KEY.trim()
+        ) {
+            install(io.github.jan.supabase.auth.Auth)
+        }
+        
+        return try {
+            tempSupabase.auth.signInWith(Email) {
+                this.email = email
+                this.password = oldPassword
+            }
+            try { tempSupabase.auth.signOut() } catch (_: Exception) {}
+            
+            supabase.auth.updateUser {
+                password = newPassword
+            }
+            repository.updatePassword(_currentUserId.value, "")
+            null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            l10n.oldPasswordIncorrect
         }
     }
 

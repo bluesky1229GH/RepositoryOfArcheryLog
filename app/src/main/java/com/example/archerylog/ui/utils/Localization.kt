@@ -360,6 +360,11 @@ class L10n(val language: AppLanguage) {
         AppLanguage.JAPANESE -> "パスワード"
         AppLanguage.CHINESE -> "密码"
     }
+    val passwordVisibilityHint = when(language) {
+        AppLanguage.ENGLISH -> "Tap the eye icon to view your password."
+        AppLanguage.JAPANESE -> "目のアイコンをタップしてパスワードを表示します"
+        AppLanguage.CHINESE -> "点击眼睛图标以显示或隐藏密码"
+    }
     val logout = when(language) {
         AppLanguage.ENGLISH -> "Log Out"
         AppLanguage.JAPANESE -> "ログアウト"
@@ -404,6 +409,26 @@ class L10n(val language: AppLanguage) {
         AppLanguage.ENGLISH -> "New Password"
         AppLanguage.JAPANESE -> "新しいパスワード"
         AppLanguage.CHINESE -> "新密码"
+    }
+    val confirmNewPassword = when(language) {
+        AppLanguage.ENGLISH -> "Confirm New Password"
+        AppLanguage.JAPANESE -> "新しいパスワード（確認）"
+        AppLanguage.CHINESE -> "确认新密码"
+    }
+    val passwordsDoNotMatch = when(language) {
+        AppLanguage.ENGLISH -> "New passwords do not match."
+        AppLanguage.JAPANESE -> "新しいパスワードが一致しません。"
+        AppLanguage.CHINESE -> "两次输入的新密码不一致。"
+    }
+    val oldPasswordIncorrect = when(language) {
+        AppLanguage.ENGLISH -> "Incorrect old password."
+        AppLanguage.JAPANESE -> "現在のパスワードが正しくありません。"
+        AppLanguage.CHINESE -> "旧密码错误。"
+    }
+    val passwordCannotBeEmpty = when(language) {
+        AppLanguage.ENGLISH -> "Password cannot be empty."
+        AppLanguage.JAPANESE -> "パスワードを入力してください。"
+        AppLanguage.CHINESE -> "密码不能为空。"
     }
     val deleteAccountConfirm = when(language) {
         AppLanguage.ENGLISH -> "Are you sure you want to delete your account? All your sessions and scores will be permanently deleted."

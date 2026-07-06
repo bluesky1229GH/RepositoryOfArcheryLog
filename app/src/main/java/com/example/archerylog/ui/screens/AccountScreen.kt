@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
 import com.example.archerylog.ui.ArcheryViewModel
@@ -35,6 +36,7 @@ fun AccountScreen(
     val currentUser by viewModel.currentUser.collectAsState()
     val currentLanguage by viewModel.currentLanguage.collectAsState()
     val l10n = L10n(currentLanguage)
+    val scope = rememberCoroutineScope()
     
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
@@ -386,6 +388,10 @@ fun AccountScreen(
     if (showPasswordDialog) {
         var oldPassword by remember { mutableStateOf("") }
         var newPassword by remember { mutableStateOf("") }
+        var confirmNewPassword by remember { mutableStateOf("") }
+        var isOldPasswordVisible by remember { mutableStateOf(false) }
+        var isNewPasswordVisible by remember { mutableStateOf(false) }
+        var isConfirmPasswordVisible by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf("") }
         
         AlertDialog(
@@ -401,28 +407,65 @@ fun AccountScreen(
                         onValueChange = { oldPassword = it; errorMessage = "" },
                         label = { Text(l10n.oldPassword) },
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation()
+                        visualTransformation = if (isOldPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            val image = if (isOldPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            IconButton(onClick = { isOldPasswordVisible = !isOldPasswordVisible }) {
+                                Icon(imageVector = image, contentDescription = "Toggle old password visibility")
+                            }
+                        }
                     )
                     OutlinedTextField(
                         value = newPassword,
                         onValueChange = { newPassword = it; errorMessage = "" },
                         label = { Text(l10n.newPassword) },
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation()
+                        visualTransformation = if (isNewPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            val image = if (isNewPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            IconButton(onClick = { isNewPasswordVisible = !isNewPasswordVisible }) {
+                                Icon(imageVector = image, contentDescription = "Toggle new password visibility")
+                            }
+                        }
+                    )
+                    OutlinedTextField(
+                        value = confirmNewPassword,
+                        onValueChange = { confirmNewPassword = it; errorMessage = "" },
+                        label = { Text(l10n.confirmNewPassword) },
+                        singleLine = true,
+                        visualTransformation = if (isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            val image = if (isConfirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            IconButton(onClick = { isConfirmPasswordVisible = !isConfirmPasswordVisible }) {
+                                Icon(imageVector = image, contentDescription = "Toggle confirm password visibility")
+                            }
+                        }
                     )
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    if (oldPassword != currentUser?.passwordHash) {
-                        errorMessage = "Error"
-                    } else if (newPassword.isNotBlank()) {
-                        viewModel.updatePassword(newPassword)
-                        showPasswordDialog = false
-                    } else {
-                        errorMessage = "Error"
+                var isSaving by remember { mutableStateOf(false) }
+                TextButton(
+                    enabled = !isSaving,
+                    onClick = {
+                        if (newPassword.isBlank()) {
+                            errorMessage = l10n.passwordCannotBeEmpty
+                        } else if (newPassword != confirmNewPassword) {
+                            errorMessage = l10n.passwordsDoNotMatch
+                        } else {
+                            isSaving = true
+                            scope.launch {
+                                val errorMsg = viewModel.updatePassword(oldPassword, newPassword)
+                                if (errorMsg == null) {
+                                    showPasswordDialog = false
+                                } else {
+                                    errorMessage = errorMsg
+                                }
+                                isSaving = false
+                            }
+                        }
                     }
-                }) { Text(l10n.save) }
+                ) { Text(if (isSaving) "..." else l10n.save) }
             },
             dismissButton = {
                 TextButton(onClick = { showPasswordDialog = false }) { Text(l10n.cancel) }

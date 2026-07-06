@@ -8,6 +8,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.unit.dp
 import com.example.archerylog.ui.ArcheryViewModel
 import com.example.archerylog.ui.utils.L10n
@@ -26,6 +30,7 @@ fun LoginScreen(
 
     var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isPasswordVisible by remember { mutableStateOf(false) }
     var isSignUp by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var showForgotPasswordDialog by remember { mutableStateOf(false) }
@@ -60,8 +65,18 @@ fun LoginScreen(
             value = password,
             onValueChange = { password = it },
             label = { Text(l10n.password) },
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                val image = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val description = if (isPasswordVisible) "Hide password" else "Show password"
+                IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                    Icon(imageVector = image, contentDescription = description)
+                }
+            },
+            supportingText = {
+                Text(text = l10n.passwordVisibilityHint)
+            },
             modifier = Modifier.fillMaxWidth()
         )
 
