@@ -1104,6 +1104,20 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun deleteLocalGuestData(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                repository.deleteUser("guest")
+                _currentUserId.value = ""
+                prefs.edit().putString("current_user_uuid", "").apply()
+                finishSession()
+                onSuccess()
+            } catch (e: Exception) {
+                android.util.Log.e("DeleteGuestData", "Failed to delete guest data: ${e.message}", e)
+            }
+        }
+    }
+
     fun saveAiFavorite(question: String, answer: String) {
         val userId = _currentUserId.value
         if (userId.isNotBlank()) {

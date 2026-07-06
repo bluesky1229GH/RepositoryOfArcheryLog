@@ -290,14 +290,15 @@ fun AccountScreen(
                     Text(l10n.logout, color = androidx.compose.ui.graphics.Color.White)
                 }
                 
-                if (user.id != "guest") {
-                    OutlinedButton(
-                        onClick = { showDeleteDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = androidx.compose.ui.graphics.Color.White)
-                    ) {
-                        Text(l10n.deleteAccount, color = androidx.compose.ui.graphics.Color.White)
-                    }
+                OutlinedButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = androidx.compose.ui.graphics.Color.White)
+                ) {
+                    Text(
+                        text = if (user.id == "guest") l10n.deleteLocalData else l10n.deleteAccount,
+                        color = androidx.compose.ui.graphics.Color.White
+                    )
                 }
             } else {
                 Text("Loading...")
@@ -482,13 +483,18 @@ fun AccountScreen(
     }
     
     if (showDeleteDialog) {
+        val isGuest = currentUser?.id == "guest"
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text(l10n.deleteAccount) },
-            text = { Text(l10n.deleteAccountConfirm) },
+            title = { Text(if (isGuest) l10n.deleteLocalData else l10n.deleteAccount) },
+            text = { Text(if (isGuest) l10n.deleteLocalDataConfirm else l10n.deleteAccountConfirm) },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteAccount(onSuccess = onLogout)
+                    if (isGuest) {
+                        viewModel.deleteLocalGuestData(onSuccess = onLogout)
+                    } else {
+                        viewModel.deleteAccount(onSuccess = onLogout)
+                    }
                     showDeleteDialog = false
                 }) { Text(l10n.delete, color = MaterialTheme.colorScheme.error) }
             },

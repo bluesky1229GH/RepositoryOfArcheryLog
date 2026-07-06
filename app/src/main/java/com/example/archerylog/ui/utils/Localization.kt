@@ -747,4 +747,16 @@ class L10n(val language: AppLanguage) {
         AppLanguage.JAPANESE -> "パスワードを入力してください。"
         AppLanguage.CHINESE -> "请输入密码。"
     }
+
+    val deleteLocalData = when(language) {
+        AppLanguage.ENGLISH -> "Delete Local Data"
+        AppLanguage.JAPANESE -> "ローカルデータを削除"
+        AppLanguage.CHINESE -> "删除本地数据"
+    }
+
+    val deleteLocalDataConfirm = when(language) {
+        AppLanguage.ENGLISH -> "Are you sure you want to delete all local archery records and settings? This action cannot be undone."
+        AppLanguage.JAPANESE -> "すべてのローカル射撃記録と設定を削除してもよろしいですか？この操作は取り消せません。"
+        AppLanguage.CHINESE -> "您确定要删除所有本地的射箭记录与设置吗？该操作不可撤销。"
+    }
 }
