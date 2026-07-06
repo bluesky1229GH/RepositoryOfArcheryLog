@@ -114,6 +114,7 @@ fun ArcheryApp(viewModel: ArcheryViewModel) {
 
     val bottomBarRoutes = listOf("dashboard", "records", "add_session", "account")
     val showSyncMask by viewModel.showSyncMask.collectAsState()
+    val syncMaskType by viewModel.syncMaskType.collectAsState()
 
     val instantEnter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(0))
     val instantExit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(0))
@@ -281,7 +282,7 @@ fun ArcheryApp(viewModel: ArcheryViewModel) {
                         ) {
                             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                             Text(
-                                text = l10n.syncingData,
+                                text = if (syncMaskType == ArcheryViewModel.SyncMaskType.VERIFYING_LOGIN) l10n.verifyingLogin else l10n.syncingData,
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }

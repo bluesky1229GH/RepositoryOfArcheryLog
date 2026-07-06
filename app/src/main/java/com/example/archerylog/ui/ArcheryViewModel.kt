@@ -147,6 +147,14 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     private val _showSyncMask = MutableStateFlow(false)
     val showSyncMask = _showSyncMask.asStateFlow()
 
+    enum class SyncMaskType {
+        VERIFYING_LOGIN,
+        SYNCING_DATA
+    }
+
+    private val _syncMaskType = MutableStateFlow(SyncMaskType.VERIFYING_LOGIN)
+    val syncMaskType = _syncMaskType.asStateFlow()
+
     private val _oauthError = MutableStateFlow<String?>(null)
     val oauthError = _oauthError.asStateFlow()
 
@@ -714,6 +722,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             val uri = intent.data
             if (uri != null) {
                 try {
+                    _syncMaskType.value = SyncMaskType.VERIFYING_LOGIN
                     _showSyncMask.value = true
                     _debugMessage.value = "收到 Activity Intent 数据: $uri"
                     supabase.handleDeeplinks(intent)
@@ -762,6 +771,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
         prefs.edit().putString("current_user_uuid", userId).apply()
         viewModelScope.launch {
             if (userId != "guest") {
+                _syncMaskType.value = SyncMaskType.SYNCING_DATA
                 _showSyncMask.value = true
             }
             try {

@@ -729,4 +729,10 @@ class L10n(val language: AppLanguage) {
         AppLanguage.JAPANESE -> "または"
         AppLanguage.CHINESE -> "或"
     }
+
+    val verifyingLogin = when(language) {
+        AppLanguage.ENGLISH -> "Verifying login, please wait..."
+        AppLanguage.JAPANESE -> "ログインを検証中、しばらくお待ちください..."
+        AppLanguage.CHINESE -> "正在验证登录，请稍后..."
+    }
 }
