@@ -89,6 +89,20 @@ fun LoginScreen(
             },
             modifier = Modifier.fillMaxWidth()
         )
+        
+        if (!isSignUp) {
+            TextButton(
+                onClick = { showForgotPasswordDialog = true },
+                modifier = Modifier.align(Alignment.End),
+                contentPadding = PaddingValues(top = 4.dp, bottom = 4.dp)
+            ) {
+                Text(
+                    text = l10n.forgotPassword,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
 
         if (error != null) {
             val isVerificationError = error == l10n.emailNotVerifiedError || error == l10n.verificationSentHint
@@ -154,39 +168,21 @@ fun LoginScreen(
             Text(if (isSignUp) l10n.signupButton else l10n.loginButton)
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        TextButton(
+            onClick = {
+                isSignUp = !isSignUp
+                error = null
+            },
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            contentPadding = PaddingValues(0.dp)
         ) {
-            if (!isSignUp) {
-                TextButton(
-                    onClick = { showForgotPasswordDialog = true },
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Text(
-                        text = l10n.forgotPassword,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            TextButton(
-                onClick = {
-                    isSignUp = !isSignUp
-                    error = null
-                },
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text(
-                    text = if (isSignUp) l10n.hasAccount else l10n.noAccount,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            Text(
+                text = if (isSignUp) l10n.hasAccount else l10n.noAccount,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
