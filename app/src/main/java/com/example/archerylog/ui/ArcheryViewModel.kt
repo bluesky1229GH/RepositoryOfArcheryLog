@@ -549,13 +549,16 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     suspend fun loginAsGuest() {
-        val guestUser = User(
-            id = "guest",
-            username = "Guest",
-            email = "guest@local.archerylog",
-            passwordHash = ""
-        )
-        repository.insertUser(guestUser)
+        val existing = repository.getUserById("guest")
+        if (existing == null) {
+            val guestUser = User(
+                id = "guest",
+                username = "Guest",
+                email = "guest@local.archerylog",
+                passwordHash = ""
+            )
+            repository.insertUser(guestUser)
+        }
         loginInternal("guest")
     }
 
