@@ -18,7 +18,7 @@
                 if (type === 'recovery') {
                     const urlParams = new URLSearchParams(window.location.search);
                     const lang = urlParams.get('lang') || '';
-                    window.location.href = 'reset-password.html' + (lang ? '?lang=' + lang : '') + hash;
+                    window.location.href = '/reset-password.html' + (lang ? '?lang=' + lang : '') + hash;
                 }
             }
         })();
