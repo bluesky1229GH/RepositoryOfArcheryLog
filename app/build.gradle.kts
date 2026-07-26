@@ -25,7 +25,7 @@ configurations.all {
 
 android {
     namespace = "com.example.archerylog"
-    compileSdk = 35
+    compileSdk = 36
 
     // Load properties from the root local.properties file safely
     val props = Properties()
@@ -37,9 +37,9 @@ android {
     defaultConfig {
         applicationId = "com.bluesky.archerylog"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 6
-        versionName = "2.0.1"
+        targetSdk = 36
+        versionCode = 9
+        versionName = "2.0.4"
 
         // Project API Keys
         val apiKey = props.getProperty("GEMINI_API_KEY")?.trim() ?: ""

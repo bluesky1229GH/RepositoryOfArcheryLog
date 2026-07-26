@@ -50,7 +50,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
     ) {
         install(io.github.jan.supabase.postgrest.Postgrest)
         install(io.github.jan.supabase.auth.Auth) {
-            flowType = io.github.jan.supabase.auth.FlowType.PKCE
+            flowType = io.github.jan.supabase.auth.FlowType.IMPLICIT
             scheme = "archerylog"
             host = "callback"
         }
