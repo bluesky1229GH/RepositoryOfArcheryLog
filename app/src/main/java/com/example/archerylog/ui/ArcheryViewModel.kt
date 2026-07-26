@@ -612,8 +612,7 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             val guestUser = User(
                 id = "guest",
                 username = "Guest",
-                email = "guest@local.archerylog",
-                passwordHash = ""
+                email = "guest@local.archerylog"
             )
             repository.insertUser(guestUser)
         }
@@ -1062,7 +1061,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             supabase.auth.updateUser {
                 password = newPassword
             }
-            repository.updatePassword(_currentUserId.value, "")
             null
         } catch (e: Exception) {
             e.printStackTrace()
@@ -1135,7 +1133,6 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
             repository.updateUsername(user.id, user.username)
             user.email?.let { repository.updateEmail(user.id, it) }
             user.avatarUri?.let { repository.updateAvatarUri(user.id, it) }
-            repository.updatePassword(user.id, user.passwordHash)
         }
     }
 }

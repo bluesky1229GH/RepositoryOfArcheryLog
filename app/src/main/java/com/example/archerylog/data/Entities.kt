@@ -23,7 +23,6 @@ data class User(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val username: String,
     val email: String? = null,
-    @SerialName("password_hash") val passwordHash: String = "",
     @SerialName("avatar_uri") val avatarUri: String? = null
 )
 

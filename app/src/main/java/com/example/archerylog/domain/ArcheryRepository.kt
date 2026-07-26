@@ -20,7 +20,7 @@ class ArcheryRepository(private val archeryDao: ArcheryDao) {
     fun getUserByIdFlow(userId: String): Flow<User?> = archeryDao.getUserByIdFlow(userId)
     suspend fun getUserById(userId: String): User? = archeryDao.getUserById(userId)
     
-    suspend fun updatePassword(userId: String, newPassword: String) = archeryDao.updatePassword(userId, newPassword)
+
     suspend fun updateEmail(userId: String, newEmail: String) {
         archeryDao.updateEmail(userId, newEmail)
     }

@@ -41,8 +41,7 @@ interface ArcheryDao {
     @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
     suspend fun getUserById(userId: String): User?
 
-    @Query("UPDATE users SET passwordHash = :newPassword WHERE id = :userId")
-    suspend fun updatePassword(userId: String, newPassword: String)
+
 
     @Query("UPDATE users SET email = :newEmail WHERE id = :userId")
     suspend fun updateEmail(userId: String, newEmail: String)
