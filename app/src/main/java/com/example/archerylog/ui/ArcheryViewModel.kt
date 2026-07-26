@@ -82,7 +82,12 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 }
                 _aiResponse.value = result
             } catch (t: Throwable) {
-                _aiResponse.value = "Error: ${t.localizedMessage}"
+                val errorMsg = t.message ?: t.localizedMessage ?: ""
+                if (errorMsg.contains("reported as leaked", ignoreCase = true) || errorMsg.contains("leaked", ignoreCase = true)) {
+                    _aiResponse.value = errorMsg
+                } else {
+                    _aiResponse.value = "获取出现问题，请联系软件制作团队获取帮助"
+                }
             } finally {
                 _isAiLoading.value = false
             }
