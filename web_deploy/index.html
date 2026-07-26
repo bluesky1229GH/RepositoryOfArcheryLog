@@ -339,8 +339,51 @@
             // 调试信息显示
             document.getElementById('debug-info').textContent = `Debug: Browser=${browserLang}, Query=${queryLang}, Final=${langCode}`;
         }
+        
+        function checkError() {
+            const hash = window.location.hash;
+            if (hash) {
+                const params = new URLSearchParams(hash.substring(1));
+                if (params.has('error')) {
+                    const errorDesc = params.get('error_description') || 'Verification link expired or invalid';
+                    const decodedError = decodeURIComponent(errorDesc).replace(/\+/g, ' ');
+                    
+                    const isZh = document.documentElement.lang === 'zh-CN';
+                    const isJa = document.documentElement.lang === 'ja';
+                    
+                    let titleText = 'Verification Failed';
+                    let subText = 'The link is invalid or has expired. Please request a new verification email from the app.';
+                    if (isZh) {
+                        titleText = '邮箱验证失败';
+                        subText = '验证链接无效或已过期，请在 App 中重新发送验证邮件。<br>错误详情: ' + decodedError;
+                    } else if (isJa) {
+                        titleText = 'メール認証に失敗しました';
+                        subText = '認証リンクが無効か、期限が切れています。アプリから再送信してください。<br>エラー詳細: ' + decodedError;
+                    } else {
+                        subText = 'The link is invalid or has expired. Please request a new verification email from the app.<br>Error: ' + decodedError;
+                    }
+                    
+                    document.getElementById('title').textContent = titleText;
+                    document.getElementById('title').style.background = 'linear-gradient(135deg, #ef4444, #f87171)';
+                    document.getElementById('title').style.webkitBackgroundClip = 'text';
+                    document.getElementById('title').style.webkitTextFillColor = 'transparent';
+                    
+                    document.getElementById('subtitle').innerHTML = subText;
+                    
+                    const card = document.querySelector('.card');
+                    if (card) card.style.display = 'none';
+                    
+                    const badge = document.querySelector('.check-badge');
+                    if (badge) {
+                        badge.style.background = '#ef4444';
+                        badge.innerHTML = '<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                    }
+                }
+            }
+        }
 
         initLanguage();
+        checkError();
     </script>
 </body>
 </html>
