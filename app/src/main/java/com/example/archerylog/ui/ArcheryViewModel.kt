@@ -82,7 +82,8 @@ class ArcheryViewModel(application: Application) : AndroidViewModel(application)
                 }
                 _aiResponse.value = result
             } catch (t: Throwable) {
-                _aiResponse.value = "获取出现问题，请联系软件制作团队获取帮助"
+                val l10n = L10n(currentLanguage.value)
+                _aiResponse.value = l10n.aiErrorMsg
             } finally {
                 _isAiLoading.value = false
             }

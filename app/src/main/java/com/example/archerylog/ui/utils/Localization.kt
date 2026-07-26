@@ -759,4 +759,10 @@ class L10n(val language: AppLanguage) {
         AppLanguage.JAPANESE -> "すべてのローカル射撃記録と設定を削除してもよろしいですか？この操作は取り消せません。"
         AppLanguage.CHINESE -> "您确定要删除所有本地的射箭记录与设置吗？该操作不可撤销。"
     }
+
+    val aiErrorMsg = when(language) {
+        AppLanguage.ENGLISH -> "An error occurred while fetching data. Please contact the development team for assistance."
+        AppLanguage.JAPANESE -> "データの取得中にエラーが発生しました。開発チームにお問い合わせください。"
+        AppLanguage.CHINESE -> "获取出现问题，请联系软件制作团队获取帮助"
+    }
 }
